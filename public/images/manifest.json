@@ -1,0 +1,12 @@
+{
+  "hero": "gallery-3.jpg",
+  "heroCaption": "Happy older adults enjoying time together",
+  "portrait": "gallery-2.jpg",
+  "portraitCaption": "Smiling seniors portrait",
+  "gallery": [
+    { "src": "gallery-1.jpg", "caption": "Happy moments" },
+    { "src": "gallery-2.jpg", "caption": "Family connections" },
+    { "src": "gallery-3.jpg", "caption": "Outdoors & activity" },
+    { "src": "gallery-1.jpg", "caption": "Community & care" }
+  ]
+}
