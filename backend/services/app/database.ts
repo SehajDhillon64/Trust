@@ -1,4 +1,4 @@
-import { supabase, getSupabaseAdmin, supabaseAdmin } from '../config/supabase'
+import { supabase, getSupabaseAdmin, supabaseAdmin } from '../../config/supabase'
 import { User, Facility, Resident, Transaction, ServiceBatch, ServiceBatchItem, PreAuthDebit, MonthlyPreAuthList, MonthlyCashBoxHistory, SignupInvitation } from '../types'
 import { Invoice, InvoiceItem } from '../types'
 import { Database } from '../types/database'
