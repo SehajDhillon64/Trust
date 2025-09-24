@@ -1,15 +1,23 @@
-html, body, #root {
-  margin: 0;
-  height: 100%;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  /* Improve default contrast for form controls */
+  input, select, textarea {
+    @apply text-gray-900 placeholder-gray-500;
+  }
+
+  input[type="month"], input[type="date"] {
+    @apply bg-white border-gray-400;
+  }
 }
-button {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
-}
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+
+/* Ensure month picker text/icons are visible across browsers */
+input[type="month"]::-webkit-calendar-picker-indicator { opacity: 0.9; }
+input[type="month"]::-webkit-datetime-edit { color: #111827; }
+input[type="month"]::-webkit-datetime-edit-text { color: #374151; }
+input[type="month"]::-webkit-datetime-edit-month-field { color: #111827; }
+input[type="month"]::-webkit-datetime-edit-year-field { color: #111827; }
+
