@@ -699,6 +699,72 @@ app.post('/api/paypal/orders/:orderId/capture', async (req, res) => {
   }
 });
 
+// Resident withdrawals in a date range (for reports)
+app.get('/api/reports/resident-withdrawals', async (req, res) => {
+  try {
+    const facilityId = String(req.query.facilityId || '');
+    const start = String(req.query.start || '');
+    const end = String(req.query.end || '');
+    if (!facilityId || !start || !end) {
+      return res.status(400).json({ error: 'facilityId, start, end are required' });
+    }
+    const { data, error } = await supabaseAdmin
+      .from('resident_withdrawals')
+      .select('id,resident_id,amount,created_at')
+      .eq('facility_id', facilityId)
+      .eq('method', 'cheque')
+      .gte('created_at', start)
+      .lte('created_at', end)
+      .order('created_at', { ascending: false });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json(data || []);
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to load report' });
+  }
+});
+
+// Auth: update password for current user (uses bearer token)
+app.post('/api/auth/update-password', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+    const { password } = req.body || {};
+    if (!token) return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !userData?.user) return res.status(401).json({ error: userErr?.message || 'Invalid token' });
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(userData.user.id, { password });
+    if (updErr) return res.status(400).json({ error: updErr.message });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to update password' });
+  }
+});
+
+// Cashbox: list transactions by date range
+app.get('/api/cashbox/transactions-range', async (req, res) => {
+  try {
+    const facilityId = String(req.query.facilityId || '');
+    const start = String(req.query.start || '');
+    const end = String(req.query.end || '');
+    if (!facilityId || !start || !end) {
+      return res.status(400).json({ error: 'facilityId, start, end are required' });
+    }
+    const { data, error } = await supabaseAdmin
+      .from('cash_box_transactions')
+      .select('*')
+      .eq('facility_id', facilityId)
+      .gte('created_at', start)
+      .lte('created_at', end)
+      .order('created_at', { ascending: false });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json(data || []);
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to load transactions' });
+  }
+});
 app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`API server listening on http://localhost:${port}`);
