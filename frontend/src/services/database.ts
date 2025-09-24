@@ -61,6 +61,11 @@ export async function createSignupInvitation(facilityId: string, email: string, 
 export async function sendInvitationEmail(invitation: SignupInvitation, facilityName: string) { return rpcCall<boolean>('sendInvitationEmail', [invitation, facilityName]) }
 export async function sendInviteByEmail(params: { email: string; role?: 'OM' | 'POA' | 'Resident'; facilityId?: string; residentId?: string; name?: string; redirectTo?: string }) { return rpcCall<boolean>('sendInviteByEmail', [params]) }
 
+// Sends a role-based reset password email using backend RPC
+export async function sendRoleBasedResetPasswordEmail(params: { email: string; role: 'OM' | 'POA' | 'Resident' | 'Vendor'; siteUrl?: string }) {
+  return rpcCall<boolean>('sendRoleBasedResetPasswordEmail', [params])
+}
+
 export async function getPreAuthDebitsByResident(residentId: string, month?: string) { return rpcCall<PreAuthDebit[]>('getPreAuthDebitsByResident', [residentId, month]) }
 export async function getPreAuthDebitsByFacility(facilityId: string, month?: string) { return rpcCall<PreAuthDebit[]>('getPreAuthDebitsByFacility', [facilityId, month]) }
 export async function createPreAuthDebit(preAuthDebitData: Omit<PreAuthDebit, 'id' | 'createdAt'>) { return rpcCall<PreAuthDebit>('createPreAuthDebit', [preAuthDebitData]) }
