@@ -102,6 +102,50 @@ app.get('/api/facilities', async (req, res) => {
   }
 });
 
+// Minimal RPC endpoint to support frontend rpcCall usage
+app.post('/api/rpc', async (req, res) => {
+  try {
+    const { method, params } = req.body || {};
+    if (!method || typeof method !== 'string') {
+      return res.status(400).json({ error: 'method is required' });
+    }
+
+    switch (method) {
+      case 'getFacilities': {
+        const companyId = Array.isArray(params) ? params[0] : params;
+        let query = supabaseAdmin
+          .from('facilities')
+          .select('id, name, address, phone, email, office_manager_email, created_at, status, unique_code, company_id')
+          .order('name') as any;
+        if (companyId) {
+          query = query.eq('company_id', companyId);
+        }
+        const { data, error } = await query;
+        if (error) {
+          throw new Error(error.message);
+        }
+        const result = (data || []).map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          address: f.address,
+          phone: f.phone || undefined,
+          email: f.email,
+          officeManagerEmail: f.office_manager_email,
+          createdAt: f.created_at,
+          status: f.status,
+          uniqueCode: f.unique_code,
+          companyId: f.company_id,
+        }));
+        return res.json({ result });
+      }
+      default:
+        return res.status(404).json({ error: 'Unknown RPC method' });
+    }
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || 'RPC error' });
+  }
+});
+
 // Send Supabase-managed invite email
 app.post('/api/auth/invite', async (req, res) => {
   try {
