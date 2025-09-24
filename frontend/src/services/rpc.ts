@@ -1,23 +1,16 @@
-const API_BASE = (import.meta as any)?.env?.VITE_BACKEND_URL || ''
-
-type RpcResponse<T> = { result: T }
-
-export async function rpcCall<T = any>(method: string, params?: any | any[]): Promise<T> {
-  const res = await fetch(`${API_BASE}/api/rpc`, {
+export async function rpc<T = any>(method: string, params?: any): Promise<T> {
+  const base = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:4000'
+  const resp = await fetch(`${base.replace(/\/$/, '')}/api/rpc`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify({ method, params })
   })
-  if (!res.ok) {
-    let msg = `RPC ${method} failed with ${res.status}`
-    try {
-      const body = await res.json()
-      if (body?.error) msg = body.error
-    } catch {}
-    throw new Error(msg)
-  }
-  const data = (await res.json()) as RpcResponse<T>
-  return data.result as T
+  const body = await resp.json().catch(() => ({}))
+  if (!resp.ok) throw new Error(body?.error || `RPC ${method} failed (${resp.status})`)
+  return body.result as T
 }
+
+// Backward compatibility for older wrappers
+export const rpcCall = rpc;
 

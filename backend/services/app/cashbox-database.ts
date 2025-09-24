@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { supabase } from './config/supabase';
 import { cash_box_balances, cash_box_transactions, monthly_cash_box_history} from '../types';
 import { Database } from '../types/database';
 // Cash Box Types

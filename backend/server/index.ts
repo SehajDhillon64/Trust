@@ -3,6 +3,7 @@ import cors from 'cors';
 import { FRONTEND_URL, PORT } from '../config/env.js';
 import { createOrder, captureOrder } from '../services/payments.js';
 import { getItems } from '../services/db.js';
+import { handleRpc } from './rpc.js';
 import * as appDb from '../services/app/database.js';
 import * as appPaypal from '../services/app/paypal.js';
 
@@ -14,6 +15,9 @@ app.use(express.json());
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
+
+// General-purpose RPC dispatcher for server-only services
+app.post('/api/rpc', handleRpc);
 
 // Example DB route
 app.get('/api/items', async (_req, res) => {

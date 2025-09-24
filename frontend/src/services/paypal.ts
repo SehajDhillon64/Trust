@@ -1,4 +1,4 @@
-import { rpcCall } from './rpc';
+import { rpc } from './rpc';
 
 export interface PayPalConfig {
   clientId: string;
@@ -7,7 +7,7 @@ export interface PayPalConfig {
 }
 
 export async function fetchPayPalConfig(facilityId: string): Promise<PayPalConfig> {
-  return rpcCall<PayPalConfig>('fetchPayPalConfig', [facilityId])
+  return rpc<PayPalConfig>('paypal.fetchPayPalConfig', [facilityId])
 }
 
 export async function createPayPalOrder(params: {
