@@ -61,7 +61,7 @@ export default function LandingPage() {
           <div className="gradient-orb orb-2" aria-hidden="true"></div>
           <div className="container hero-inner">
             <div className="hero-copy">
-              <h1 id="hero-title" className="headline">sehaj</h1>
+              <h1 id="hero-title" className="headline">Human-centered technology for dignified aging</h1>
               <p className="subhead">
                 Vaultiq blends security with empathy—designed to help families, caregivers, and communities
                 support older adults with confidence.
