@@ -382,7 +382,8 @@ export async function signInUser(email: string, password: string) {
       if (!accessToken) {
         throw new Error('Missing access token after sign-in');
       }
-      const resp = await fetch('/api/users/me', {
+      const apiBase = (process.env.VITE_API_BASE_URL || process.env.VITE_BACKEND_URL || 'https://trust-3.onrender.com').replace(/\/+$/, '');
+      const resp = await fetch(`${apiBase}/api/users/me`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!resp.ok) {
@@ -499,7 +500,8 @@ export async function getCurrentUser() {
     // Fallback via server
     const accessToken = data.session.access_token;
     try {
-      const resp = await fetch('/api/users/me', {
+      const apiBase = (process.env.VITE_API_BASE_URL || process.env.VITE_BACKEND_URL || 'https://trust-3.onrender.com').replace(/\/+$/, '');
+      const resp = await fetch(`${apiBase}/api/users/me`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!resp.ok) {
@@ -2239,7 +2241,7 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
   try {
     // Use server endpoint to trigger Supabase invite email
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+    const apiBase = (process.env.VITE_API_BASE_URL || process.env.VITE_BACKEND_URL || 'https://trust-3.onrender.com').replace(/\/+$/, '');
     const resp = await fetch(`${apiBase}/api/auth/invite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2270,7 +2272,7 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
 export async function sendInviteByEmail(params: { email: string; role?: 'OM' | 'POA' | 'Resident'; facilityId?: string; residentId?: string; name?: string; redirectTo?: string }): Promise<boolean> {
   try {
     const { email, role, facilityId, residentId, name, redirectTo } = params || ({} as any);
-    const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+    const apiBase = (process.env.VITE_API_BASE_URL || process.env.VITE_BACKEND_URL || 'https://trust-3.onrender.com').replace(/\/+$/, '');
     const resp = await fetch(`${apiBase}/api/auth/invite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2410,7 +2412,7 @@ export async function createVendorUserAndLink(
 
 export async function createOrLinkVendor(params: { facilityId: string; email: string; name?: string; password?: string }) {
   const { facilityId, email, name, password } = params;
-  const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+  const apiBase = (process.env.VITE_API_BASE_URL || process.env.VITE_BACKEND_URL || 'https://trust-3.onrender.com').replace(/\/+$/, '');
   const resp = await fetch(`${apiBase}/api/vendors`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2426,7 +2428,7 @@ export async function createOrLinkVendor(params: { facilityId: string; email: st
 // resetVendorPassword removed: temp password functionality discontinued
 
 export async function unlinkVendorFromFacility(vendorUserId: string, facilityId: string) {
-  const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+  const apiBase = (process.env.VITE_API_BASE_URL || process.env.VITE_BACKEND_URL || 'https://trust-3.onrender.com').replace(/\/+$/, '');
   const resp = await fetch(`${apiBase}/api/vendors/link?vendorUserId=${encodeURIComponent(vendorUserId)}&facilityId=${encodeURIComponent(facilityId)}`, {
     method: 'DELETE',
   });
