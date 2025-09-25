@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabase';
+import { supabase } from '../../config/supabase.js';
 // Note: backend DB types are provided via generics on the Supabase client; remove unused imports
 // DB generics inferred from configured client; no explicit import needed
 // Cash Box Types
