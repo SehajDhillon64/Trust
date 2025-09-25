@@ -16,6 +16,12 @@ export const PORT = Number(getEnv('PORT', '4000'));
 export const FRONTEND_URL = getEnv('FRONTEND_URL', 'http://localhost:5173');
 export const BACKEND_URL = getEnv('BACKEND_URL', 'https://trust-3.onrender.com');
 
+// Optional: comma-separated additional allowed origins for CORS
+export const CORS_ORIGINS: string[] = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s: string) => s.trim())
+  .filter(Boolean);
+
 // Optional at startup; validated by respective modules when used
 export const SUPABASE_URL = process.env.SUPABASE_URL;
 export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
