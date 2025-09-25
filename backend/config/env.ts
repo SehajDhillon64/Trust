@@ -13,7 +13,7 @@ function getEnv(name: string, fallback?: string): string {
 
 export const NODE_ENV = getEnv('NODE_ENV', 'development');
 export const PORT = Number(getEnv('PORT', '4000'));
-export const FRONTEND_URL = getEnv('FRONTEND_URL', 'http://localhost:5173');
+export const FRONTEND_URL = getEnv('FRONTEND_URL', 'https://zp1v56uxy8rdx5ypatb0ockcb9tr6a-oci3--5173--96435430.local-credentialless.webcontainer-api.io');
 export const BACKEND_URL = getEnv('BACKEND_URL', 'https://trust-3.onrender.com');
 
 // Optional at startup; validated by respective modules when used
