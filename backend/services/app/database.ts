@@ -1,4 +1,4 @@
-import { supabase, getSupabaseAdmin, supabaseAdmin } from '../../config/supabase'
+import { supabase, getSupabaseAdmin, supabaseAdmin } from '../../config/supabase.js'
 import { User, Facility, Resident, Transaction, ServiceBatch, ServiceBatchItem, PreAuthDebit, MonthlyPreAuthList, SignupInvitation } from '../../types/models'
 type InvoiceItem = { id: string; invoiceId: string; residentId: string; amount: number; description: string; createdAt: string; updatedAt?: string }
 type Invoice = { id: string; facilityId: string; vendorUserId: string; status: 'open' | 'submitted' | 'paid'; omNotes?: string; createdAt: string; updatedAt?: string; submittedAt?: string; paidAt?: string; paidBy?: string; items: InvoiceItem[]; invoice_no?: number | string; vendorName?: string; vendorAddress?: string; vendorEmail?: string; invoiceDate?: string }
