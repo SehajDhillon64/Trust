@@ -9,7 +9,11 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(cors());
+const allowedOrigin = process.env.FRONTEND_URL || 'https://zp1v56uxy8rdx5ypatb0ockcb9tr6a-oci3--5173--96435430.local-credentialless.webcontainer-api.io';
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true,
+}));
 app.use(express.json());
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://qqcauorhdutkszufvrlm.supabase.co';
