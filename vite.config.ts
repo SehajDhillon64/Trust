@@ -12,7 +12,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: (process.env.VITE_BACKEND_URL || 'https://trust-3.onrender.com').replace(/\/+$/, ''),
         changeOrigin: true,
         secure: false,
       },
