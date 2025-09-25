@@ -8,7 +8,7 @@ import * as appPaypal from '../services/app/paypal.js';
 
 const app = express();
 
-app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+app.use(cors({ origin: FRONTEND_URL||'https://zp1v56uxy8rdx5ypatb0ockcb9tr6a-oci3--5173--96435430.local-credentialless.webcontainer-api.io/', credentials: true }));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
