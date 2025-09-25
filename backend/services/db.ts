@@ -9,7 +9,11 @@ export async function getItems() {
 
 export async function upsertUserProfile(profile: { id: string; email?: string | null; full_name?: string | null }) {
   const supabaseAdmin = getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin.from('profiles').upsert(profile).select('*').single();
+  const { data, error } = await (supabaseAdmin as any)
+    .from('profiles')
+    .upsert(profile as any)
+    .select('*')
+    .single();
   if (error) throw error;
   return data;
 }

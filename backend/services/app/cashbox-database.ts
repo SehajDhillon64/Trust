@@ -1,6 +1,6 @@
-import { supabase } from '../config/supabase';
-import { cash_box_balances, cash_box_transactions, monthly_cash_box_history} from '../types';
-import { Database } from '../types/database';
+import { supabase } from '../../config/supabase';
+// Note: backend DB types are provided via generics on the Supabase client; remove unused imports
+// DB generics inferred from configured client; no explicit import needed
 // Cash Box Types
 export interface CashBoxTransaction {
   id: string;
@@ -199,7 +199,7 @@ export function subscribeToCashBoxBalance(
         table: 'cash_box_balances',
         filter: `facility_id=eq.${facilityId}`
       },
-      async (payload) => {
+      async (payload: any) => {
         if (payload.new && typeof payload.new === 'object' && 'balance' in payload.new) {
           onUpdate(payload.new.balance as number);
         }
@@ -225,7 +225,7 @@ export function subscribeToCashBoxTransactions(
         table: 'cash_box_transactions',
         filter: `facility_id=eq.${facilityId}`
       },
-      (payload) => {
+      (payload: any) => {
         if (payload.new) {
           onInsert(payload.new as unknown as CashBoxTransaction);
         }

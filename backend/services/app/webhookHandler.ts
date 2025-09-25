@@ -1,4 +1,4 @@
-import type { StripeWebhookEvent } from '../types/stripe';
+import type { StripeWebhookEvent } from '../../types/stripe';
 
 export interface WebhookHandler {
   (event: StripeWebhookEvent): Promise<void>;

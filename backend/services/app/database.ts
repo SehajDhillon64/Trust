@@ -1,7 +1,8 @@
 import { supabase, getSupabaseAdmin, supabaseAdmin } from '../../config/supabase'
-import { User, Facility, Resident, Transaction, ServiceBatch, ServiceBatchItem, PreAuthDebit, MonthlyPreAuthList, MonthlyCashBoxHistory, SignupInvitation } from '../types'
-import { Invoice, InvoiceItem } from '../types'
-import { Database } from '../types/database'
+import { User, Facility, Resident, Transaction, ServiceBatch, ServiceBatchItem, PreAuthDebit, MonthlyPreAuthList, SignupInvitation } from '../../types/models'
+type InvoiceItem = { id: string; invoiceId: string; residentId: string; amount: number; description: string; createdAt: string; updatedAt?: string }
+type Invoice = { id: string; facilityId: string; vendorUserId: string; status: 'open' | 'submitted' | 'paid'; omNotes?: string; createdAt: string; updatedAt?: string; submittedAt?: string; paidAt?: string; paidBy?: string; items: InvoiceItem[]; invoice_no?: number | string; vendorName?: string; vendorAddress?: string; vendorEmail?: string; invoiceDate?: string }
+import { Database } from '../../types/database'
 
 // Utility function to check Supabase connection status
 async function checkSupabaseConnection() {
@@ -34,7 +35,7 @@ function createTimeout(ms: number, operation: string) {
   });
 }
 
-type Tables = Database['public']['Tables']
+type Tables = any
 
 // Conversion functions for service batches
 function dbServiceBatchToServiceBatch(dbBatch: any): ServiceBatch {
@@ -130,7 +131,7 @@ const mockUsers: User[] = [
 ];
 
 const isDemoMode = () => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const isDemo = false;
   console.log('Demo mode check:', { supabaseUrl, isDemo });
   return isDemo;
@@ -606,12 +607,12 @@ export async function getFacilities(companyId?: string) {
           created_at: f.created_at,
           status: f.status,
           unique_code: f.unique_code,
-          company_id: f.company_id,
+          company_id: (f as any).company_id,
         }));
       }
 
       // Dev-only final fallback to mock facilities so the UI remains usable
-      if (import.meta?.env?.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn('No facilities from API; using mock facilities in DEV mode');
         return mockFacilities;
       }
@@ -619,7 +620,7 @@ export async function getFacilities(companyId?: string) {
       return [];
     } catch (fallbackNoDataErr) {
       console.warn('Server fallback failed after empty Supabase result:', fallbackNoDataErr)
-      if (import.meta?.env?.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn('Using mock facilities in DEV mode due to failures');
         return mockFacilities;
       }
@@ -645,17 +646,17 @@ export async function getFacilities(companyId?: string) {
           created_at: f.created_at,
           status: f.status,
           unique_code: f.unique_code,
-          company_id: f.company_id,
+          company_id: (f as any).company_id,
         }));
       }
-      if (import.meta?.env?.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn('API returned no facilities; using mock facilities in DEV mode')
         return mockFacilities;
       }
       return [];
     } catch (fallbackErr) {
       console.error('Error getting facilities (including fallback):', fallbackErr)
-      if (import.meta?.env?.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.warn('Using mock facilities in DEV mode due to failures');
         return mockFacilities;
       }
@@ -748,7 +749,7 @@ export async function createResidentWithLinkedUser(params: {
       companyId = (facRow as any)?.company_id || null;
     } catch (_) {}
 
-    const { data: appUser, error: appUserError } = await supabaseAdmin
+    const { data: appUser, error: appUserError } = await (supabaseAdmin as any)
       .from('users')
       .insert({
         name,
@@ -810,7 +811,7 @@ export async function createResidentWithLinkedUser(params: {
       companyId = (facRow as any)?.company_id || null;
     } catch (_) {}
 
-    const { data: appUser, error: appUserError } = await supabaseAdmin
+    const { data: appUser, error: appUserError } = await (supabaseAdmin as any)
       .from('users')
       .insert({
         name,
@@ -871,7 +872,7 @@ export async function createOfficeManagerUser(
   const authUserId = adminUser.user.id;
 
   // 2) Insert into application users table
-  const { data: appUser, error: appUserError } = await supabaseAdmin
+  const { data: appUser, error: appUserError } = await (supabaseAdmin as any)
     .from('users')
     .insert({
       name: name || normalizedEmail,
@@ -1055,7 +1056,7 @@ export async function getTotalTrustBalances(facilityId: string): Promise<number>
     return 0;
   }
 
-  return data.reduce((total, r) => total + (r.trust_balance ?? 0), 0);
+  return (data as Array<{ trust_balance: number | null }>).reduce((total: number, r) => total + (r.trust_balance ?? 0), 0);
 }
 
 // Transaction functions
@@ -1511,7 +1512,7 @@ async function updateBatchTotals(batchId: string) {
 
   if (error) throw error
 
-  const totalAmount = (items || []).reduce((sum, i) => sum + (i.amount || 0), 0)
+  const totalAmount = (items as Array<{ amount: number | null }> | null || []).reduce((sum: number, i) => sum + (i.amount || 0), 0)
 
   await supabase
     .from('service_batches')
@@ -1577,7 +1578,7 @@ export async function getFacilitiesForVendor(vendorUserId: string): Promise<Faci
     .eq('vendor_user_id', vendorUserId)
 
   if (error) throw error
-  const facilityIds = (links || []).map(l => l.facility_id)
+  const facilityIds = (links || []).map((l: any) => l.facility_id)
   if (facilityIds.length === 0) return []
   const { data: facilitiesData, error: facErr } = await supabase
     .from('facilities')
@@ -1585,7 +1586,7 @@ export async function getFacilitiesForVendor(vendorUserId: string): Promise<Faci
     .in('id', facilityIds)
     .order('name')
   if (facErr) throw facErr
-  return facilitiesData.map(dbFacilityToFacility)
+  return facilitiesData.map(dbFacilityToFacility as any)
 }
 
 export async function linkVendorToFacility(vendorUserId: string, facilityId: string): Promise<void> {
@@ -2013,8 +2014,9 @@ async function updateDepositBatchTotalsDb(batchId: string) {
     .eq('batch_id', batchId)
 
   if (error) throw error
-  const totalAmount = (items || []).reduce((s, i) => s + (i.amount || 0), 0)
-  const totalCash = (items || []).filter(i => i.method === 'cash').reduce((s, i) => s + (i.amount || 0), 0)
+  const list = (items as Array<{ amount: number; method: 'cash' | 'cheque' }> | null) || []
+  const totalAmount = list.reduce((s: number, i) => s + (i.amount || 0), 0)
+  const totalCash = list.filter(i => i.method === 'cash').reduce((s: number, i) => s + (i.amount || 0), 0)
   const totalCheques = totalAmount - totalCash
 
   const { error: upError } = await supabase
@@ -2037,7 +2039,7 @@ export function subscribeToResidentChanges(facilityId: string, callback: (reside
         table: 'residents',
         filter: `facility_id=eq.${facilityId}`
       },
-      (payload) => {
+      (payload: any) => {
         if (payload.new) {
           callback(dbResidentToResident(payload.new as Tables['residents']['Row']))
         }
@@ -2057,7 +2059,7 @@ export function subscribeToTransactionChanges(facilityId: string, callback: (tra
         table: 'transactions',
         filter: `facility_id=eq.${facilityId}`
       },
-      (payload) => {
+      (payload: any) => {
         if (payload.new) {
           callback(dbTransactionToTransaction(payload.new as Tables['transactions']['Row']))
         }
@@ -2237,7 +2239,7 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
   try {
     // Use server endpoint to trigger Supabase invite email
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const apiBase = (import.meta as any)?.env?.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
+    const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
     const resp = await fetch(`${apiBase}/api/auth/invite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2268,7 +2270,7 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
 export async function sendInviteByEmail(params: { email: string; role?: 'OM' | 'POA' | 'Resident'; facilityId?: string; residentId?: string; name?: string; redirectTo?: string }): Promise<boolean> {
   try {
     const { email, role, facilityId, residentId, name, redirectTo } = params || ({} as any);
-    const apiBase = (import.meta as any)?.env?.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
+    const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
     const resp = await fetch(`${apiBase}/api/auth/invite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2408,7 +2410,7 @@ export async function createVendorUserAndLink(
 
 export async function createOrLinkVendor(params: { facilityId: string; email: string; name?: string; password?: string }) {
   const { facilityId, email, name, password } = params;
-  const apiBase = (import.meta as any)?.env?.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
+  const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
   const resp = await fetch(`${apiBase}/api/vendors`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2424,7 +2426,7 @@ export async function createOrLinkVendor(params: { facilityId: string; email: st
 // resetVendorPassword removed: temp password functionality discontinued
 
 export async function unlinkVendorFromFacility(vendorUserId: string, facilityId: string) {
-  const apiBase = (import.meta as any)?.env?.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
+  const apiBase = (process.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
   const resp = await fetch(`${apiBase}/api/vendors/link?vendorUserId=${encodeURIComponent(vendorUserId)}&facilityId=${encodeURIComponent(facilityId)}`, {
     method: 'DELETE',
   });
@@ -2651,7 +2653,7 @@ export async function getFacilityMonthlyPreAuthLists(facilityId: string): Promis
     if (error) throw error;
 
     const allPreAuthDebits = await getPreAuthDebitsByFacility(facilityId);
-    return data.map(list => dbMonthlyPreAuthListToMonthlyPreAuthList(list, allPreAuthDebits));
+    return data.map((list: any) => dbMonthlyPreAuthListToMonthlyPreAuthList(list, allPreAuthDebits));
   } catch (error) {
     console.error('Error fetching facility monthly pre-auth lists:', error);
     throw error;
@@ -2736,7 +2738,7 @@ export async function getMonthlyCashBoxHistory(
   facilityId: string,
   year?: number,
   month?: number
-): Promise<MonthlyCashBoxHistory[]> {
+): Promise<any[]> {
   try {
     let query = supabase
       .from('monthly_cash_box_history')
@@ -2779,7 +2781,7 @@ export function subscribeToCashBoxChanges(
         table: 'cash_box_balances',
         filter: `facility_id=eq.${facilityId}`
       },
-      (payload) => {
+      (payload: any) => {
         if (payload.new && 'balance' in payload.new) {
           onUpdate(payload.new.balance as number);
         }
@@ -2901,7 +2903,8 @@ export async function provisionUser(params: { email: string; name?: string; role
   }
 
   if ((role === 'POA' || role === 'Resident') && residentId) {
-    const { error: linkErr } = await getSupabaseAdmin()
+    const adminAny = getSupabaseAdmin() as any;
+    const { error: linkErr } = await adminAny
       .from('residents')
       .update({ linked_user_id: (profileRow as any).id })
       .eq('id', residentId);
