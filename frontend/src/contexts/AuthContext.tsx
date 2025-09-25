@@ -24,7 +24,8 @@ const mockFacilities: Facility[] = [
     officeManagerEmail: 'sarah.johnson@ltc.com',
     createdAt: '2024-01-01',
     status: 'active',
-    uniqueCode: 'SM001'
+    uniqueCode: 'SM001',
+    companyId: 'COMPANY-1'
   },
   {
     id: '2',
@@ -35,7 +36,8 @@ const mockFacilities: Facility[] = [
     officeManagerEmail: 'mike.wilson@goldenyears.ca',
     createdAt: '2024-01-15',
     status: 'active',
-    uniqueCode: 'GY002'
+    uniqueCode: 'GY002',
+    companyId: 'COMPANY-1'
   }
 ];
 
