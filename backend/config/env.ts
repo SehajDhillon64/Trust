@@ -14,7 +14,7 @@ function getEnv(name: string, fallback?: string): string {
 export const NODE_ENV = getEnv('NODE_ENV', 'development');
 export const PORT = Number(getEnv('PORT', '4000'));
 export const FRONTEND_URL = getEnv('FRONTEND_URL', 'http://localhost:5173');
-export const BACKEND_URL = getEnv('BACKEND_URL', 'http://localhost:4000');
+export const BACKEND_URL = getEnv('BACKEND_URL', 'https://trust-3.onrender.com');
 
 // Optional at startup; validated by respective modules when used
 export const SUPABASE_URL = process.env.SUPABASE_URL;

@@ -1,4 +1,4 @@
-const API_BASE = (import.meta as any)?.env?.VITE_BACKEND_URL || ''
+const API_BASE = (((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com').replace(/\/+$/, '')
 
 type RpcResponse<T> = { result: T }
 

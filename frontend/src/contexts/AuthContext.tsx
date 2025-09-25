@@ -158,7 +158,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Provision via server to bypass RLS and handle linking server-side
-      const resp = await fetch('/api/users/provision', {
+      const apiBase = (((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com').replace(/\/+$/, '')
+      const resp = await fetch(`${apiBase}/api/users/provision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
