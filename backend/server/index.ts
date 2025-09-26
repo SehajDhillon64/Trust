@@ -77,6 +77,15 @@ const rpcAllowlist: Record<string, any> = {
   updateServiceBatchItem: appDb.updateServiceBatchItem,
   postServiceBatch: appDb.postServiceBatch,
   deleteServiceBatch: appDb.deleteServiceBatch,
+  // pre-authorization debits
+  getPreAuthDebitsByResident: appDb.getPreAuthDebitsByResident,
+  getPreAuthDebitsByFacility: appDb.getPreAuthDebitsByFacility,
+  createPreAuthDebit: appDb.createPreAuthDebit,
+  updatePreAuthDebit: appDb.updatePreAuthDebit,
+  createMonthlyPreAuthList: appDb.createMonthlyPreAuthList,
+  getMonthlyPreAuthList: appDb.getMonthlyPreAuthList,
+  getFacilityMonthlyPreAuthLists: appDb.getFacilityMonthlyPreAuthLists,
+  closeMonthlyPreAuthList: appDb.closeMonthlyPreAuthList,
   createDepositBatchDb: appDb.createDepositBatchDb,
   getDepositBatchesByFacilityDb: appDb.getDepositBatchesByFacilityDb,
   getDepositBatchByIdDb: appDb.getDepositBatchByIdDb,
@@ -104,6 +113,12 @@ const rpcAllowlist: Record<string, any> = {
   sendInvitationEmail: appDb.sendInvitationEmail,
   sendInviteByEmail: appDb.sendInviteByEmail,
   provisionUser: appDb.provisionUser,
+  // OM admin helpers
+  createOfficeManagerUser: appDb.createOfficeManagerUser,
+  getOmUsers: appDb.getOmUsers,
+  clearFacilityForUser: appDb.clearFacilityForUser,
+  // auth email helpers
+  sendRoleBasedResetPasswordEmail: appDb.sendRoleBasedResetPasswordEmail,
   // cashbox
   updateCashBoxBalanceWithTransaction: appDb.updateCashBoxBalanceWithTransaction,
   resetCashBoxToMonthly: appDb.resetCashBoxToMonthly,
