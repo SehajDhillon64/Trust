@@ -1,0 +1,12 @@
+{
+	"hero": "gallery-1.jpg",
+	"heroCaption": "Happy older adults enjoying time together",
+	"portrait": "gallery-2.jpg",
+	"portraitCaption": "Smiling seniors portrait",
+	"gallery": [
+		"gallery-1.jpg",
+		"gallery-2.jpg",
+		"gallery-3.jpg"
+	]
+}
+
