@@ -9,9 +9,12 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
-const allowedOrigin = process.env.FRONTEND_URL || 'https://zp1v56uxy8rdx5ypatb0ockcb9tr6a-oci3--5173--96435430.local-credentialless.webcontainer-api.io';
+const allowedOrigins = [
+  'https://trust1.netlify.app',
+  process.env.FRONTEND_URL || 'https://zp1v56uxy8rdx5ypatb0ockcb9tr6a-oci3--5173--96435430.local-credentialless.webcontainer-api.io',
+].filter(Boolean);
 app.use(cors({
-  origin: allowedOrigin,
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());
