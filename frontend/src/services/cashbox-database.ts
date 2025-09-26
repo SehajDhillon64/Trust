@@ -1,5 +1,6 @@
 import { rpcCall } from './rpc';
 import type { MonthlyCashBoxHistory } from '../types';
+import { supabase } from '../config/supabase';
 
 // Cash Box Types
 export interface CashBoxTransaction {
@@ -36,7 +37,27 @@ export async function initializeCashBoxBalance(
 }
 
 // Get current cash box balance for a facility
-export async function getCashBoxBalance(_facilityId: string): Promise<number> { return 0 }
+export async function getCashBoxBalance(facilityId: string): Promise<number> {
+  try {
+    const { data, error } = await supabase
+      .from('cash_box_balances')
+      .select('balance')
+      .eq('facility_id', facilityId)
+      .maybeSingle();
+    if (error) {
+      console.error('Error getting cash box balance:', error);
+      return 0;
+    }
+    if (!data) {
+      // If no row exists yet, default to starting monthly amount
+      return 2500.0;
+    }
+    return Number((data as any).balance || 0);
+  } catch (e) {
+    console.error('Error getting cash box balance:', e);
+    return 0;
+  }
+}
 
 // Process a cash box transaction
 export async function processCashBoxTransaction(
@@ -65,8 +86,19 @@ export async function getCashBoxTransactions(
   limit: number = 50,
   offset: number = 0
 ): Promise<CashBoxTransaction[]> {
-  // Not yet implemented in backend; return empty until server RPC is added
-  return []
+  try {
+    const { data, error } = await supabase
+      .from('cash_box_transactions')
+      .select('*')
+      .eq('facility_id', facilityId)
+      .order('created_at', { ascending: false })
+      .range(offset, Math.max(offset, offset + limit - 1));
+    if (error) throw error;
+    return (data as unknown as CashBoxTransaction[]) || [];
+  } catch (e) {
+    console.error('Error getting cash box transactions:', e);
+    return [];
+  }
 }
 
 // Get cash box transactions by date range
@@ -75,7 +107,20 @@ export async function getCashBoxTransactionsByDate(
   startDateIso: string,
   endDateIso: string
 ): Promise<CashBoxTransaction[]> {
-  return []
+  try {
+    const { data, error } = await supabase
+      .from('cash_box_transactions')
+      .select('*')
+      .eq('facility_id', facilityId)
+      .gte('created_at', startDateIso)
+      .lte('created_at', endDateIso)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data as unknown as CashBoxTransaction[]) || [];
+  } catch (e) {
+    console.error('Error getting cash box transactions by date:', e);
+    return [];
+  }
 }
 
 // Subscribe to cash box balance changes
@@ -83,7 +128,20 @@ export function subscribeToCashBoxBalance(
   facilityId: string,
   onUpdate: (balance: number) => void
 ) {
-  return { unsubscribe() {} }
+  const channel = supabase
+    .channel(`cash_box_balance_${facilityId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'cash_box_balances', filter: `facility_id=eq.${facilityId}` },
+      (payload: any) => {
+        const next = (payload?.new as any) || null;
+        if (next && typeof next.balance !== 'undefined') {
+          onUpdate(Number(next.balance));
+        }
+      }
+    )
+    .subscribe();
+  return { unsubscribe() { try { supabase.removeChannel(channel) } catch (_) {} } }
 }
 
 // Add realtime subscription for cash box transactions
@@ -91,7 +149,19 @@ export function subscribeToCashBoxTransactions(
   facilityId: string,
   onInsert: (transaction: CashBoxTransaction) => void
 ) {
-  return { unsubscribe() {} }
+  const channel = supabase
+    .channel(`cash_box_transactions_${facilityId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'cash_box_transactions', filter: `facility_id=eq.${facilityId}` },
+      (payload: any) => {
+        if (payload?.new) {
+          onInsert(payload.new as unknown as CashBoxTransaction);
+        }
+      }
+    )
+    .subscribe();
+  return { unsubscribe() { try { supabase.removeChannel(channel) } catch (_) {} } }
 }
 
 // Get monthly cash box history
