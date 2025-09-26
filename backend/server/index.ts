@@ -1,6 +1,6 @@
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import cors from 'cors';
-import { FRONTEND_URL, PORT } from '../config/env.js';
+import { FRONTEND_URL, PORT, CORS_ORIGINS } from '../config/env.js';
 import { createOrder, captureOrder } from '../services/payments.js';
 import { getItems } from '../services/db.js';
 import * as appDb from '../services/app/database.js';
@@ -8,15 +8,25 @@ import * as appPaypal from '../services/app/paypal.js';
 
 const app = express();
 
-app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+// Build dynamic CORS allowlist: FRONTEND_URL plus any extra origins from env
+const allowedOrigins = [FRONTEND_URL, ...CORS_ORIGINS];
+
+app.use(cors({
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true); // allow non-browser clients
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
 // Example DB route
-app.get('/api/items', async (_req, res) => {
+app.get('/api/items', async (_req: Request, res: Response) => {
   try {
     const items = await getItems();
     res.json({ items });
@@ -26,7 +36,7 @@ app.get('/api/items', async (_req, res) => {
 });
 
 // PayPal routes
-app.post('/api/payments/create-order', async (req, res) => {
+app.post('/api/payments/create-order', async (req: Request, res: Response) => {
   try {
     const { amount, currency } = req.body ?? {};
     if (!amount || !currency) return res.status(400).json({ error: 'amount and currency are required' });
@@ -37,7 +47,7 @@ app.post('/api/payments/create-order', async (req, res) => {
   }
 });
 
-app.post('/api/payments/capture-order', async (req, res) => {
+app.post('/api/payments/capture-order', async (req: Request, res: Response) => {
   try {
     const { orderId } = req.body ?? {};
     if (!orderId) return res.status(400).json({ error: 'orderId is required' });
@@ -110,7 +120,7 @@ const rpcAllowlist: Record<string, any> = {
   fetchPayPalConfig: appPaypal.fetchPayPalConfig,
 };
 
-app.post('/api/rpc', async (req, res) => {
+app.post('/api/rpc', async (req: Request, res: Response) => {
   try {
     const { method, params } = req.body || {};
     if (!method || typeof method !== 'string') {

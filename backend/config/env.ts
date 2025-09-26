@@ -16,6 +16,12 @@ export const PORT = Number(getEnv('PORT', '4000'));
 export const FRONTEND_URL = getEnv('FRONTEND_URL', 'https://zp1v56uxy8rdx5ypatb0ockcb9tr6a-oci3--5173--96435430.local-credentialless.webcontainer-api.io');
 export const BACKEND_URL = getEnv('BACKEND_URL', 'https://trust-3.onrender.com');
 
+// Optional: comma-separated additional allowed origins for CORS
+export const CORS_ORIGINS: string[] = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s: string) => s.trim())
+  .filter(Boolean);
+
 // Optional at startup; validated by respective modules when used
 export const SUPABASE_URL = process.env.SUPABASE_URL;
 export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
