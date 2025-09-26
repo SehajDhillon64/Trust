@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 
+/* Landing page global styles */
+@import './landing.css';
+
 @layer base {
   /* Improve default contrast for form controls */
   input, select, textarea {
