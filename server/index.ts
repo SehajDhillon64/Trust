@@ -17,6 +17,11 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
+// Explicit OPTIONS preflight support
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 app.use(express.json());
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://qqcauorhdutkszufvrlm.supabase.co';

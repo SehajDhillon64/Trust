@@ -9,6 +9,8 @@ import * as appPaypal from '../services/app/paypal.js';
 const app = express();
 
 app.use(cors({ origin: [FRONTEND_URL, 'https://trust1.netlify.app'], credentials: true }));
+// Explicitly handle CORS preflight for all routes
+app.options('*', cors({ origin: [FRONTEND_URL, 'https://trust1.netlify.app'], credentials: true }));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
