@@ -40,6 +40,38 @@ const supabaseAnon = anonKey ? createClient(supabaseUrl, anonKey) : null as any;
 
 const siteUrl = (process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app').replace(/\/$/, '');
 
+// =============================
+// Auth cookie helpers
+// =============================
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return cookieHeader.split(';').reduce((acc: Record<string, string>, part) => {
+    const [key, ...rest] = part.trim().split('=');
+    acc[key] = decodeURIComponent(rest.join('='));
+    return acc;
+  }, {});
+}
+
+function setAuthCookies(res: express.Response, accessToken: string, refreshToken?: string | null) {
+  const cookieOptions: any = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    path: '/',
+    // 1 day for access token; refresh token may live longer
+    maxAge: 24 * 60 * 60 * 1000,
+  };
+  res.cookie('sb-access-token', accessToken, cookieOptions);
+  if (refreshToken) {
+    res.cookie('sb-refresh-token', refreshToken, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
+  }
+}
+
+function clearAuthCookies(res: express.Response) {
+  res.cookie('sb-access-token', '', { httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 0 });
+  res.cookie('sb-refresh-token', '', { httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 0 });
+}
+
 // Helper to build a PayPal client per facility
 function createPayPalClient(config: { clientId: string; clientSecret: string; environment?: 'sandbox' | 'live' }) {
   const env = (config.environment || process.env.PAYPAL_ENVIRONMENT || 'sandbox').toLowerCase();
@@ -87,6 +119,35 @@ async function loadFacilityPayPalConfig(supabaseAdmin: ReturnType<typeof createC
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ==================================================
+// Auth: exchange tokens from invite/reset to cookies
+// ==================================================
+app.post('/api/auth/exchange', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+    const accessToken = (req.body && typeof req.body.accessToken === 'string') ? req.body.accessToken : bearer;
+    const refreshToken = (req.body && typeof req.body.refreshToken === 'string') ? req.body.refreshToken : null;
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Missing accessToken' });
+    }
+    const { data: userData, error } = await supabaseAdmin.auth.getUser(accessToken);
+    if (error || !userData?.user) {
+      return res.status(401).json({ error: error?.message || 'Invalid token' });
+    }
+    setAuthCookies(res, accessToken, refreshToken);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to exchange auth' });
+  }
+});
+
+// Auth: sign out (clear cookies)
+app.post('/api/auth/signout', async (_req, res) => {
+  clearAuthCookies(res);
+  return res.json({ success: true });
 });
 
 app.get('/api/facilities', async (req, res) => {
@@ -363,11 +424,12 @@ app.post('/api/users/provision', async (req, res) => {
 app.get('/api/users/me', async (req, res) => {
   try {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
-
+    let token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
     if (!token) {
-      return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+      const cookies = parseCookies(req.headers.cookie);
+      token = cookies['sb-access-token'] || null;
     }
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
 
@@ -452,6 +514,146 @@ app.get('/api/users/me', async (req, res) => {
     return res.json({ user: userRow, facility: facilityRow, companyId: (userRow as any)?.company_id || (facilityRow as any)?.company_id || null });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Internal server error' });
+  }
+});
+
+// Update password for current user (uses cookie/bearer to resolve auth user id)
+app.post('/api/auth/update-password', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    let token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+    if (!token) {
+      const cookies = parseCookies(req.headers.cookie);
+      token = cookies['sb-access-token'] || null;
+    }
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authData?.user) {
+      return res.status(401).json({ error: authError?.message || 'Invalid token' });
+    }
+
+    const newPassword: string | undefined = (req.body && typeof req.body.password === 'string') ? req.body.password : undefined;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(authData.user.id, { password: newPassword });
+    if (updErr) return res.status(400).json({ error: updErr.message });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to update password' });
+  }
+});
+
+// Get linked resident for current user
+app.get('/api/residents/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    let token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+    if (!token) {
+      const cookies = parseCookies(req.headers.cookie);
+      token = cookies['sb-access-token'] || null;
+    }
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authData?.user) {
+      return res.status(401).json({ error: authError?.message || 'Invalid token' });
+    }
+
+    const { data: userRow, error: userErr } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authData.user.id)
+      .maybeSingle();
+    if (userErr || !userRow) return res.status(404).json({ error: userErr?.message || 'Profile not found' });
+
+    const { data: residentRow, error: rErr } = await supabaseAdmin
+      .from('residents')
+      .select('*')
+      .eq('linked_user_id', userRow.id)
+      .maybeSingle();
+    if (rErr) return res.status(400).json({ error: rErr.message });
+    return res.json(residentRow || null);
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to load resident' });
+  }
+});
+
+// Accept terms for current user
+app.post('/api/users/accept-terms', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    let token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+    if (!token) {
+      const cookies = parseCookies(req.headers.cookie);
+      token = cookies['sb-access-token'] || null;
+    }
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authData?.user) {
+      return res.status(401).json({ error: authError?.message || 'Invalid token' });
+    }
+    const { data: userRow } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authData.user.id)
+      .maybeSingle();
+    if (!userRow) return res.status(404).json({ error: 'Profile not found' });
+
+    const termsVersion = (req.body && req.body.termsVersion) || 'v1';
+    const termsAcceptedAt = (req.body && req.body.termsAcceptedAt) || new Date().toISOString();
+    const { error: upErr } = await supabaseAdmin
+      .from('users')
+      .update({ terms_version: termsVersion, terms_accepted_at: termsAcceptedAt })
+      .eq('id', (userRow as any).id);
+    if (upErr) return res.status(400).json({ error: upErr.message });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to accept terms' });
+  }
+});
+
+// Update resident services for current user's linked resident
+app.post('/api/residents/services', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    let token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+    if (!token) {
+      const cookies = parseCookies(req.headers.cookie);
+      token = cookies['sb-access-token'] || null;
+    }
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authData?.user) {
+      return res.status(401).json({ error: authError?.message || 'Invalid token' });
+    }
+    const { data: userRow } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authData.user.id)
+      .maybeSingle();
+    if (!userRow) return res.status(404).json({ error: 'Profile not found' });
+
+    const allowedServices = (req.body && req.body.allowedServices) || {};
+    const { data: residentRow, error: rErr } = await supabaseAdmin
+      .from('residents')
+      .select('id')
+      .eq('linked_user_id', (userRow as any).id)
+      .maybeSingle();
+    if (rErr || !residentRow) return res.status(404).json({ error: rErr?.message || 'Resident not found' });
+
+    const { error: upErr } = await supabaseAdmin
+      .from('residents')
+      .update({ allowed_services: allowedServices })
+      .eq('id', (residentRow as any).id);
+    if (upErr) return res.status(400).json({ error: upErr.message });
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed to update services' });
   }
 });
 

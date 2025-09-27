@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../config/supabase';
 
 export default function ConfirmSignupResident() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -26,36 +25,24 @@ export default function ConfirmSignupResident() {
   }), []);
   const [selectedServices, setSelectedServices] = useState<Record<string, boolean>>(initialServices);
 
+  const API_BASE = (import.meta as any)?.env?.VITE_BACKEND_URL || 'https://trust-3.onrender.com';
+
   useEffect(() => {
     let isMounted = true;
+
     const loadLinkedResident = async () => {
       setLookupLoading(true);
       setError('');
       try {
-        const { data: session } = await supabase.auth.getSession();
-        const authUserId = session.session?.user?.id;
-        if (!authUserId) {
-          setError('No active session. Use the confirmation link from your email.');
+        const r = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/me`, {
+          credentials: 'include'
+        });
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({}));
+          setError(body?.error || 'Not authenticated. Use the email link.');
           return;
         }
-        const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('auth_user_id', authUserId)
-          .single();
-        if (profileError || !profile) {
-          setError('Unable to load your account. Please contact support.');
-          return;
-        }
-        const { data: residentRow, error: residentError } = await supabase
-          .from('residents')
-          .select('*')
-          .eq('linked_user_id', profile.id)
-          .maybeSingle();
-        if (residentError) {
-          setError('Failed to load resident. Please try again later.');
-          return;
-        }
+        const residentRow = await r.json();
         if (!residentRow) {
           setError('No resident is linked to this account.');
           return;
@@ -78,8 +65,13 @@ export default function ConfirmSignupResident() {
         if (isMounted) setLookupLoading(false);
       }
     };
+
+    // Initial load
     loadLinkedResident();
-    return () => { isMounted = false };
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const normalize = (s: string) => (s || '').trim().toLowerCase();
@@ -109,14 +101,16 @@ export default function ConfirmSignupResident() {
     setUpdating(true);
     setError('');
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const authUserId = session.session?.user?.id;
-      if (!authUserId) throw new Error('No active session');
-      const { error } = await supabase
-        .from('users')
-        .update({ terms_accepted_at: new Date().toISOString(), terms_version: 'v1' })
-        .eq('auth_user_id', authUserId);
-      if (error) throw error;
+      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/accept-terms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ termsVersion: 'v1', termsAcceptedAt: new Date().toISOString() })
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to record acceptance');
+      }
       setAcceptedTerms(true);
       setStep(2);
     } catch (e: any) {
@@ -131,12 +125,16 @@ export default function ConfirmSignupResident() {
     setUpdating(true);
     setError('');
     try {
-      const updates: any = { allowed_services: selectedServices };
-      const { error } = await supabase
-        .from('residents')
-        .update(updates)
-        .eq('id', resident.id);
-      if (error) throw error;
+      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ allowedServices: selectedServices })
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to save services');
+      }
       setStep(3);
     } catch (e: any) {
       setError(e?.message || 'Failed to save services');
@@ -163,8 +161,16 @@ export default function ConfirmSignupResident() {
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password })
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to update password');
+      }
       setMessage('Setup complete. You can now sign in.');
     } catch (e: any) {
       setError(e?.message || 'Failed to update password');
