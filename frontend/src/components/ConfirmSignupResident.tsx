@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../config/supabase';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export default function ConfirmSignupResident() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -28,16 +29,27 @@ export default function ConfirmSignupResident() {
 
   useEffect(() => {
     let isMounted = true;
+    let retryTimer: number | null = null;
+    let retries = 0;
+
     const loadLinkedResident = async () => {
       setLookupLoading(true);
       setError('');
       try {
         const { data: session } = await supabase.auth.getSession();
         const authUserId = session.session?.user?.id;
+
         if (!authUserId) {
+          // Allow a brief window for Supabase to process tokens from the URL hash
+          if (retries < 6) {
+            retries += 1;
+            retryTimer = window.setTimeout(loadLinkedResident, 300) as unknown as number;
+            return;
+          }
           setError('No active session. Use the confirmation link from your email.');
           return;
         }
+
         const { data: profile, error: profileError } = await supabase
           .from('users')
           .select('*')
@@ -78,8 +90,22 @@ export default function ConfirmSignupResident() {
         if (isMounted) setLookupLoading(false);
       }
     };
+
+    // Initial attempt (will retry briefly if session not ready yet)
     loadLinkedResident();
-    return () => { isMounted = false };
+
+    // Also react to auth state changes that occur after Supabase processes URL hash
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, _session: Session | null) => {
+      if (isMounted) {
+        loadLinkedResident();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (retryTimer) window.clearTimeout(retryTimer);
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   const normalize = (s: string) => (s || '').trim().toLowerCase();
