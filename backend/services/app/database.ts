@@ -390,19 +390,15 @@ export async function signInUser(email: string, password: string) {
 export async function signOutUser() {
   
   try {
-    const { error } = await supabase.auth.signOut()
-    
-    
+    const { error } = await supabase.auth.signOut();
     if (error) {
-        message: error.message,
-        name: error.name
-      });
+      console.error('Sign out error', { message: error.message, name: error.name });
       throw error;
     }
-    
   } catch (error) {
+    console.error('Unexpected sign out error', {
       message: error instanceof Error ? error.message : 'Unknown error',
-      name: error instanceof Error ? error.name : 'Unknown'
+      name: error instanceof Error ? error.name : 'Unknown',
     });
     throw error;
   }
