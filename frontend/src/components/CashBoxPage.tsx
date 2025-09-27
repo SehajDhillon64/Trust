@@ -18,6 +18,7 @@ import {
   subscribeToCashBoxBalance,
   subscribeToCashBoxTransactions,
   getMonthlyCashBoxHistory,
+  getCashBoxTransactionsByMonthYear,
   initializeCashBoxBalance,
   CashBoxTransaction
 } from '../services/cashbox-database';
@@ -54,11 +55,7 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
   useEffect(() => {
     const fetchMonthlyTransactions = async () => {
       if (!currentFacility) return;
-      const { data, error } = await supabase.rpc('get_cash_box_transactions_by_month_year', {
-        p_facility_id: currentFacility.id,
-        p_month: selectedMonth + 1,
-        p_year: selectedYear
-      });
+      const data = await getCashBoxTransactionsByMonthYear(currentFacility.id, selectedMonth + 1, selectedYear);
       setMonthlyTransactions(data as any[]);
       setLoadingMonthly(false);
     };
@@ -91,14 +88,8 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
 
     // Subscribe to new cash box transactions and refresh lists in real time
     const txSub = subscribeToCashBoxTransactions(currentFacility.id, async () => {
-      const { data } = await supabase.rpc('get_cash_box_transactions_by_month_year', {
-        p_facility_id: currentFacility.id,
-        p_month: selectedMonth + 1,
-        p_year: selectedYear
-      });
-      if (data) {
-        setMonthlyTransactions(data as any[]);
-      }
+      const data = await getCashBoxTransactionsByMonthYear(currentFacility.id, selectedMonth + 1, selectedYear);
+      setMonthlyTransactions(data as any[]);
     });
   
     return () => {
@@ -157,14 +148,8 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
         }
 
         // Also refresh the monthlyTransactions immediately
-        const { data: monthlyData } = await supabase.rpc('get_cash_box_transactions_by_month_year', {
-          p_facility_id: currentFacility.id,
-          p_month: selectedMonth + 1,
-          p_year: selectedYear
-        });
-        if (monthlyData) {
-          setMonthlyTransactions(monthlyData as any[]);
-        }
+        const monthlyData = await getCashBoxTransactionsByMonthYear(currentFacility.id, selectedMonth + 1, selectedYear);
+        if (monthlyData) setMonthlyTransactions(monthlyData as any[]);
 
         // Show receipt (prefer RPC-returned transaction; fallback to find by id in monthly data)
         let receiptTx: any = (result as any).transaction || null;

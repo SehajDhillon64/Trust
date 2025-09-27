@@ -168,3 +168,12 @@ export async function getMonthlyCashBoxHistory(
 ): Promise<MonthlyCashBoxHistory[]> {
   return rpcCall('getMonthlyCashBoxHistory', [facilityId, year, month])
 }
+
+// Get cash box transactions by month/year (wrapped backend RPC)
+export async function getCashBoxTransactionsByMonthYear(
+  facilityId: string,
+  month: number,
+  year: number
+): Promise<CashBoxTransaction[]> {
+  return rpcCall('getCashBoxTransactionsByMonthYear', [facilityId, month, year])
+}

@@ -2663,6 +2663,25 @@ export async function getMonthlyCashBoxHistory(
   }
 }
 
+// Get cash box transactions by month/year via RPC (frontend should not call supabase.rpc directly)
+export async function getCashBoxTransactionsByMonthYear(
+  facilityId: string,
+  month: number,
+  year: number
+): Promise<any[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_cash_box_transactions_by_month_year', {
+      p_facility_id: facilityId,
+      p_month: month,
+      p_year: year
+    });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    return [];
+  }
+}
+
 // Subscribe to cash box balance changes
 export function subscribeToCashBoxChanges(
   facilityId: string,
