@@ -288,7 +288,6 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
     printWindow.document.open();
     printWindow.document.write(receiptHTML);
     printWindow.document.close();
-    printWindow.print();
   };
 
   const handleReset = async () => {
