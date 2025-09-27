@@ -2796,7 +2796,7 @@ export async function provisionUser(params: { email: string; name?: string; role
 
   if (role === 'POA' || role === 'Resident') {
     const { error: inviteErr } = await (getSupabaseAdmin() as any).auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://trust1.netlify.app/reset-password/resident/',
+      redirectTo: 'https://trust1.netlify.app/confirm-signup/resident/',
       data: userMetadata,
     });
     if (inviteErr) {

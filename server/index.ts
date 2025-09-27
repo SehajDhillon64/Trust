@@ -332,7 +332,7 @@ app.post('/api/users/provision', async (req, res) => {
     if (role === 'POA' || role === 'Resident') {
       if (!(typeof password === 'string' && password.length >= 6)) {
         const { error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${siteUrl}/reset-password/resident/`,
+          redirectTo: `${siteUrl}/confirm-signup/resident/`,
           data: userMetadata,
         });
         if (inviteErr) {
