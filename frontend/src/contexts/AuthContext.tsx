@@ -101,7 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return true;
     } catch (error) {
-      console.error('Login error:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
@@ -123,19 +122,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return true;
     } catch (error) {
-      console.error('Setup account error:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
   };
 
   const signup = async (userData: { email: string; password: string; name: string; role: 'OM' | 'POA' | 'Resident'; facilityId: string; residentName?: string; residentDob?: string; residentId?: string }): Promise<boolean> => {
-    console.log('🔄 Starting signup process for:', userData.email);
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     // Add timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
-      console.error('⏱️ Signup timeout after 30 seconds');
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }, 30000);
     
@@ -151,7 +147,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (matches.length === 1) {
             targetResidentId = matches[0].id;
           } else if (matches.length > 1) {
-            console.error('❌ Resident match failed. Found', matches.length, 'matches');
             throw new Error('Multiple residents matched. Please contact support');
           } else {
             throw new Error('Resident not found for provided name/DOB/facility');
@@ -177,7 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(body?.error || `Provision failed with status ${resp.status}`);
       }
       const provisionResult = await resp.json();
-      console.log('✅ Provisioned user:', provisionResult?.user || provisionResult);
 
       // Clear timeout since operation completed
       clearTimeout(timeoutId);
@@ -185,10 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Auto-login won't happen immediately due to email confirmation
       // For now, set loading to false and let user know to check email
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      console.log('✅ Signup completed successfully');
       return true;
     } catch (error) {
-      console.error('❌ Signup error caught in AuthContext:', error);
       
       // Clear timeout since operation completed (with error)
       clearTimeout(timeoutId);
@@ -198,8 +190,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Log additional error details
       if (error instanceof Error) {
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Error stack:', error.stack);
       }
       
       // Propagate error so the caller can display a specific message
@@ -217,7 +207,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentFacility: null
       });
     } catch (error) {
-      console.error('Logout error:', error);
     }
   };
 

@@ -53,21 +53,18 @@ export default function AuthPage() {
     setError('');
     setSuccess('');
 
-    console.log('📝 AuthPage form submission started');
+    
 
     try {
       let success = false;
       
       if (isSetup) {
-        console.log('Attempting account setup with token:', formData.token);
+        
         success = await setupAccount(formData.token, formData.password);
       } else if (isLogin) {
-        console.log('Attempting login with email:', formData.email);
         success = await login(formData.email, formData.password);
-        console.log('Login result:', success);
       } else {
         // Sign up mode
-        console.log('🔄 Sign up mode initiated for:', formData.email);
         
         if (!formData.name) {
           setError('Name is required for signup.');
@@ -93,7 +90,7 @@ export default function AuthPage() {
           return;
         }
         
-        console.log('✅ Form validation passed, calling signup function...');
+        
         
         success = await signup({
           email: formData.email,
@@ -105,7 +102,7 @@ export default function AuthPage() {
           residentDob: formData.residentDob || undefined
         });
         
-        console.log('🎯 Signup function returned:', success);
+        
         
         if (success) {
           // Clear the form
@@ -122,10 +119,8 @@ export default function AuthPage() {
           });
           setSuccess('Account created successfully! You can now log in.');
           setIsLogin(true); // Switch to login mode
-          console.log('✅ Signup completed, switching to login mode');
           return;
         } else {
-          console.log('❌ Signup returned false');
           setError('Failed to create account. Please check the console for more details and try again.');
           return;
         }
@@ -133,20 +128,14 @@ export default function AuthPage() {
 
       if (!success) {
         const errorMsg = isLogin ? 'Invalid credentials. Please try again.' : 'Failed to create account. Please try again.';
-        console.log('❌ Operation failed:', errorMsg);
         setError(errorMsg);
       }
     } catch (err) {
-      console.error('❌ Form submission exception:', err);
       
       let errorMessage = 'An unexpected error occurred. Please try again.';
       
       if (err instanceof Error) {
-        console.error('❌ Error details:', {
-          message: err.message,
-          name: err.name,
-          stack: err.stack
-        });
+        
         
         // Provide more specific error messages based on the error
         const normalizedMsg = err.message.toLowerCase();

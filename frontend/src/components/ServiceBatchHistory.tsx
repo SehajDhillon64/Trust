@@ -67,7 +67,6 @@ export default function ServiceBatchHistory({ onBack }: ServiceBatchHistoryProps
         setShowBatchDetails(true);
       }
     } catch (error) {
-      console.error('Error creating new batch:', error);
     }
     await getFacilityServiceBatches(currentFacility.id, selectedService);
   };
@@ -81,7 +80,6 @@ export default function ServiceBatchHistory({ onBack }: ServiceBatchHistoryProps
         items: [...prev.items, { id: crypto.randomUUID(), residentId, amount, status: 'open' }]
       });
     } catch (error) {
-      console.error('Error adding resident to batch:', error);
     }
   };
 
@@ -94,7 +92,6 @@ export default function ServiceBatchHistory({ onBack }: ServiceBatchHistoryProps
         items: prev.items.filter(item => item.residentId !== residentId)
       });
     } catch (error) {
-      console.error('Error removing resident from batch:', error);
     }
   };
 
@@ -105,7 +102,6 @@ export default function ServiceBatchHistory({ onBack }: ServiceBatchHistoryProps
       const updatedBatch = getServiceBatch(selectedBatch.id);
       if (updatedBatch) setSelectedBatch(updatedBatch);
     } catch (error) {
-      console.error('Error updating batch item:', error);
     }
   };
 
@@ -116,7 +112,6 @@ export default function ServiceBatchHistory({ onBack }: ServiceBatchHistoryProps
       const updatedBatch = getServiceBatch(selectedBatch.id);
       if (updatedBatch) setSelectedBatch(updatedBatch);
     } catch (error) {
-      console.error('Error posting batch:', error);
     }
   };
 

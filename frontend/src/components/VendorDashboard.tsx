@@ -139,7 +139,6 @@ export default function VendorDashboard() {
         invoiceDate: vendorDetails.invoiceDate,
       });
     } catch (e) {
-      console.error('Failed to save vendor details', e);
     }
   };
 

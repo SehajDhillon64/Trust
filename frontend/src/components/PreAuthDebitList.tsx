@@ -71,7 +71,6 @@ export default function PreAuthDebitList() {
         alert('Authorization processed successfully!');
       }
     } catch (error) {
-      console.error('Error processing authorization:', error);
       alert('Failed to process authorization. Please try again.');
     }
   };
@@ -98,10 +97,8 @@ export default function PreAuthDebitList() {
       }
       
       if (result.errors.length > 0) {
-        console.error('Batch processing errors:', result.errors);
       }
     } catch (error) {
-      console.error('Error processing all authorizations:', error);
       alert('Failed to process authorizations. Please try again.');
     } finally {
       setIsProcessingAll(false);

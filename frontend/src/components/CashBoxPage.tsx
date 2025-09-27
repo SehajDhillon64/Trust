@@ -76,7 +76,6 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
       // First, ensure cash box balance is initialized
       const initResult = await initializeCashBoxBalance(currentFacility.id, user.id);
       if (!initResult.success) {
-        console.error('Failed to initialize cash box balance:', initResult.error);
       }
       // Now load the balance
       const currentBalance = await getCashBoxBalance(currentFacility.id);
@@ -156,7 +155,6 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
             try {
               await updateResident(selectedResidentId, { trustBalance: newBal });
             } catch (err) {
-              console.warn('Failed to update resident trust balance after cash box transaction:', err);
             }
           }
         }
@@ -191,7 +189,6 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
         alert(result.error || 'Transaction failed');
       }
     } catch (error) {
-      console.error('Transaction error:', error);
       alert('An error occurred while processing the transaction');
     } finally {
       setIsProcessing(false);
@@ -319,7 +316,6 @@ Are you sure you want to continue?`;
         alert(result.error || 'Failed to reset cash box');
       }
     } catch (error) {
-      console.error('Reset error:', error);
       alert('An error occurred while resetting the cash box');
     } finally {
       setIsProcessing(false);

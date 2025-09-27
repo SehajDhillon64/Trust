@@ -104,7 +104,6 @@ export default function SignupPage({ token, onSignupComplete }: SignupPageProps)
       }
     } catch (err) {
       setError('An error occurred during signup');
-      console.error('Signup error:', err);
     }
   };
 

@@ -145,7 +145,5 @@ app.post('/api/rpc', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`API server listening on http://localhost:${PORT}`);
 });
 

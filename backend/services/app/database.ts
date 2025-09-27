@@ -7,21 +7,16 @@ import { Database } from '../../types/database'
 // Utility function to check Supabase connection status
 async function checkSupabaseConnection() {
   try {
-    console.log('🔌 Checking Supabase connection...');
     const startTime = performance.now();
     const { data, error } = await supabase.from('facilities').select('count').limit(1);
     const endTime = performance.now();
     
-    console.log(`⏱️ Connection check took ${(endTime - startTime).toFixed(2)}ms`);
-    console.log('📊 Connection status:', error ? 'FAILED' : 'SUCCESS');
-    
     if (error) {
-      console.error('🚨 Connection error:', error);
       return false;
     }
     return true;
   } catch (error) {
-    console.error('🚨 Connection check failed:', error);
+    
     return false;
   }
 }
@@ -133,7 +128,6 @@ const mockUsers: User[] = [
 const isDemoMode = () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const isDemo = false;
-  console.log('Demo mode check:', { supabaseUrl, isDemo });
   return isDemo;
 };
 
@@ -206,17 +200,11 @@ export async function signUpUser(email: string, password: string, userData: {
   facilityId?: string
   companyId?: string
 }) {
-  console.log('📝 Starting signup process for:', email);
-  console.log('🕒 Timestamp:', new Date().toISOString());
-  console.log('👤 User data:', {
-    name: userData.name,
-    role: userData.role,
-    facilityId: userData.facilityId || 'None'
-  });
+  
   
   try {
     // Do NOT call Supabase auth signup. Auth is handled elsewhere.
-    console.log('🔎 Looking up existing auth user by email (admin)...');
+    
 
     // First: if a profile already exists, return it
     const { data: existingProfile, error: existingProfileError } = await supabase
@@ -226,11 +214,9 @@ export async function signUpUser(email: string, password: string, userData: {
       .maybeSingle();
 
     if (existingProfileError) {
-      console.warn('⚠️ Existing profile lookup failed:', existingProfileError.message);
     }
 
     if (existingProfile) {
-      console.log('ℹ️ Profile already exists in users table; returning existing record');
       const result = { user: dbUserToUser(existingProfile), authUser: null as any };
       return result;
     }
@@ -239,7 +225,6 @@ export async function signUpUser(email: string, password: string, userData: {
     const admin = getSupabaseAdmin();
     const listResp = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     if (listResp.error) {
-      console.error('🚨 Admin listUsers failed:', listResp.error);
       throw listResp.error;
     }
     const matched = listResp.data.users.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase());
@@ -247,10 +232,10 @@ export async function signUpUser(email: string, password: string, userData: {
       throw new Error('No auth user found for the provided email. Please complete account authentication first.');
     }
 
-    console.log('✅ Found auth user:', { authUserId: matched.id, email: matched.email });
+    
 
     // Create user profile
-    console.log('📝 Creating user profile in database...');
+    
 
     const isValidUuid = (value: string | undefined): boolean => {
       if (!value) return false;
@@ -258,9 +243,6 @@ export async function signUpUser(email: string, password: string, userData: {
     };
     const facilityIdToInsert = isValidUuid(userData.facilityId) ? userData.facilityId : null;
     if (userData.facilityId && !facilityIdToInsert) {
-      console.warn('⚠️ Provided facilityId is not a valid UUID. Inserting null for facility_id.', {
-        providedFacilityId: userData.facilityId
-      });
     }
 
     const { data: dbUser, error: userError } = await supabase
@@ -276,48 +258,21 @@ export async function signUpUser(email: string, password: string, userData: {
       .select()
       .single();
 
-    console.log('📋 Database user profile creation completed');
-    console.log('📊 Profile data created:', !!dbUser);
-    console.log('❌ Profile creation error:', userError?.message || 'None');
+    
 
     if (userError) {
-      console.error('🚨 Database user profile creation failed:', userError);
-      console.error('🔍 Profile error details:', {
-        message: userError.message,
-        code: userError.code,
-        hint: userError.hint,
-        details: userError.details
-      });
+      
       throw userError;
     }
 
-    console.log('✅ User profile created successfully in database');
-    console.log('👤 Created profile:', {
-      id: dbUser.id,
-      name: dbUser.name,
-      email: dbUser.email,
-      role: dbUser.role
-    });
+    
 
     const result = { user: dbUserToUser(dbUser), authUser: null as any };
-    console.log('🎉 Signup process completed successfully for:', email);
-    console.log('📦 Returning signup result:', {
-      user: result.user.name,
-      authUserId: matched.id
-    });
+    
 
     return result;
   } catch (error) {
-    console.error('💥 Signup process failed for:', email);
-    console.error('🔍 Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      name: error instanceof Error ? error.name : 'Unknown',
-      stack: error instanceof Error ? error.stack : 'No stack trace'
-    });
     
-    // Additional context for debugging
-    console.error('🏷️ Error type:', typeof error);
-    console.error('🏷️ Error constructor:', (error as any)?.constructor?.name || 'Unknown');
     
     throw error;
   }
@@ -326,11 +281,9 @@ export async function signUpUser(email: string, password: string, userData: {
 export async function signInUser(email: string, password: string) {
   const startTime = performance.now();
   try {
-    console.log('🔐 Starting login process for:', email);
-    console.log('🕒 Timestamp:', new Date().toISOString());
     
     // Original Supabase authentication with timeout
-    console.log('📡 Attempting Supabase authentication...');
+    
     const authStartTime = performance.now();
     
     const authPromise = supabase.auth.signInWithPassword({
@@ -341,19 +294,19 @@ export async function signInUser(email: string, password: string) {
     
     const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]) as any;
     const authEndTime = performance.now();
-    console.log(`⏱️ Supabase auth took ${(authEndTime - authStartTime).toFixed(2)}ms`);
+    
     
     if (authError) {
-      console.error('🚨 Authentication failed:', authError);
+      
       throw authError;
     }
     
     if (!authData.user) {
-      console.error('🚨 No user data returned from authentication');
+      
       throw new Error('Failed to sign in');
     }
     
-    console.log('👤 User authenticated successfully. User ID:', authData.user.id);
+    
 
     // Try direct profile read first
     let userData: any | null = null;
@@ -372,11 +325,11 @@ export async function signInUser(email: string, password: string) {
       userError = e;
     }
     const userQueryEndTime = performance.now();
-    console.log(`⏱️ User profile query (direct) took ${(userQueryEndTime - userQueryStartTime).toFixed(2)}ms`);
+    
 
     // Fallback via server if direct read failed due to RLS
     if (userError || !userData) {
-      console.warn('⚠️ Falling back to server /api/users/me for profile fetch');
+      
       const session = await supabase.auth.getSession();
       const accessToken = session.data.session?.access_token;
       if (!accessToken) {
@@ -393,7 +346,7 @@ export async function signInUser(email: string, password: string) {
       const body = await resp.json();
       userData = { ...body.user, company_id: body.companyId };
       const facilityFromServer = body.facility ? dbFacilityToFacility(body.facility) : null;
-      console.log('✅ Loaded profile via server fallback');
+      
 
       const result = { 
         user: dbUserToUser(userData), 
@@ -431,38 +384,23 @@ export async function signInUser(email: string, password: string) {
     };
     return result;
   } catch (error) {
-    console.error('💥 Login process failed for:', email);
-    console.error('🔍 Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      name: error instanceof Error ? error.name : 'Unknown',
-      stack: error instanceof Error ? error.stack : 'No stack trace'
-    });
     throw error;
   }
 }                                                                                                   
 export async function signOutUser() {
-  console.log('🚪 Starting sign out process...');
-  console.log('🕒 Timestamp:', new Date().toISOString());
   
   try {
     const { error } = await supabase.auth.signOut()
     
-    console.log('📡 Supabase signOut response received');
-    console.log('❌ Sign out error:', error?.message || 'None');
     
     if (error) {
-      console.error('🚨 Sign out failed:', error);
-      console.error('🔍 Sign out error details:', {
         message: error.message,
         name: error.name
       });
       throw error;
     }
     
-    console.log('✅ Sign out completed successfully');
   } catch (error) {
-    console.error('💥 Sign out process failed');
-    console.error('🔍 Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       name: error instanceof Error ? error.name : 'Unknown'
     });
@@ -474,12 +412,10 @@ export async function getCurrentUser() {
   const { data, error } = await supabase.auth.getSession()
 
   if (error) {
-    console.error('🚨 Failed to get session:', error);
     throw error;
   }
 
   if (!data.session?.user) {
-    console.log('ℹ️ No active session found');
     return null;
   }
 
@@ -493,7 +429,6 @@ export async function getCurrentUser() {
     .maybeSingle();
 
   if (userError) {
-    console.warn('⚠️ Direct profile read failed, attempting server fallback:', userError.message);
   }
 
   if (!userData) {
@@ -506,7 +441,6 @@ export async function getCurrentUser() {
       });
       if (!resp.ok) {
         const body = await resp.json().catch(() => ({}));
-        console.warn('⚠️ Server fallback failed:', body?.error || resp.statusText);
         return null; // Treat as no user rather than throwing to avoid blocking app
       }
       const body = await resp.json();
@@ -517,7 +451,6 @@ export async function getCurrentUser() {
         facility,
       };
     } catch (e) {
-      console.warn('⚠️ Server fallback threw error:', (e as any)?.message);
       return null;
     }
   }
@@ -564,7 +497,6 @@ export async function createFacility(facilityData: Omit<Facility, 'id' | 'create
     if (error) throw error
     return dbFacilityToFacility(data)
   } catch (error) {
-    console.error('Error creating facility:', error)
     throw error
   }
 }
@@ -590,7 +522,6 @@ export async function getFacilities(companyId?: string) {
     }
 
     // Fall back to server if Supabase returned an empty list (possible RLS or env issue)
-    console.warn('Supabase returned no facilities; attempting server fallback...')
     try {
       const resp = await fetch(`/api/facilities${companyId ? `?companyId=${encodeURIComponent(companyId)}` : ''}`);
       if (!resp.ok) {
@@ -615,21 +546,17 @@ export async function getFacilities(companyId?: string) {
 
       // Dev-only final fallback to mock facilities so the UI remains usable
       if (process.env.NODE_ENV !== 'production') {
-        console.warn('No facilities from API; using mock facilities in DEV mode');
         return mockFacilities;
       }
 
       return [];
     } catch (fallbackNoDataErr) {
-      console.warn('Server fallback failed after empty Supabase result:', fallbackNoDataErr)
       if (process.env.NODE_ENV !== 'production') {
-        console.warn('Using mock facilities in DEV mode due to failures');
         return mockFacilities;
       }
       throw fallbackNoDataErr
     }
   } catch (error) {
-    console.warn('Primary facilities fetch failed, attempting server fallback...', error)
     try {
       const resp = await fetch(`/api/facilities${companyId ? `?companyId=${encodeURIComponent(companyId)}` : ''}`);
       if (!resp.ok) {
@@ -652,14 +579,11 @@ export async function getFacilities(companyId?: string) {
         }));
       }
       if (process.env.NODE_ENV !== 'production') {
-        console.warn('API returned no facilities; using mock facilities in DEV mode')
         return mockFacilities;
       }
       return [];
     } catch (fallbackErr) {
-      console.error('Error getting facilities (including fallback):', fallbackErr)
       if (process.env.NODE_ENV !== 'production') {
-        console.warn('Using mock facilities in DEV mode due to failures');
         return mockFacilities;
       }
       throw fallbackErr
@@ -680,7 +604,6 @@ export async function getFacilityById(id: string) {
     if (error) throw error
     return dbFacilityToFacility(data)
   } catch (error) {
-    console.error('Error getting facility:', error)
     throw error
   }
 }
@@ -710,7 +633,6 @@ export async function createResident(residentData: Omit<Resident, 'id' | 'create
     if (error) throw error
     return dbResidentToResident(data)
   } catch (error) {
-    console.error('Error creating resident:', error)
     throw error
   }
 }
@@ -922,7 +844,6 @@ export async function getOmUsers(companyId?: string): Promise<User[]> {
     if (error) throw error;
     return (data || []).map(dbUserToUser);
   } catch (error) {
-    console.error('Error fetching OM users:', error);
     throw error;
   }
 }
@@ -936,7 +857,6 @@ export async function clearFacilityForUser(userId: string): Promise<void> {
       .eq('id', userId);
     if (error) throw error;
   } catch (error) {
-    console.error('Error clearing facility for user:', error);
     throw error;
   }
 }
@@ -968,7 +888,6 @@ export async function getResidentsByFacility(facilityId: string): Promise<Reside
       return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(value);
     };
     if (!isValidUuid(facilityId)) {
-      console.warn('⚠️ Skipping residents fetch due to invalid facilityId (expected UUID):', facilityId);
       return [];
     }
 
@@ -982,7 +901,6 @@ export async function getResidentsByFacility(facilityId: string): Promise<Reside
     
     return data.map(dbResidentToResident);
   } catch (error) {
-    console.error('Error fetching residents:', error);
     throw error;
   }
 }
@@ -998,7 +916,6 @@ export async function getAllResidents(): Promise<Resident[]> {
     
     return data.map(dbResidentToResident);
   } catch (error) {
-    console.error('Error fetching all residents:', error);
     throw error;
   }
 }
@@ -1014,7 +931,6 @@ export async function getResidentById(id: string) {
     if (error) throw error
     return dbResidentToResident(data)
   } catch (error) {
-    console.error('Error getting resident:', error)
     throw error
   }
 }
@@ -1042,7 +958,6 @@ export async function updateResident(id: string, updates: Partial<Resident>) {
     if (error) throw error
     return dbResidentToResident(data)
   } catch (error) {
-    console.error('Error updating resident:', error)
     throw error
   }
 }
@@ -1054,7 +969,6 @@ export async function getTotalTrustBalances(facilityId: string): Promise<number>
     .eq("facility_id", facilityId);
 
   if (error) {
-    console.error("Error fetching trust balances:", error);
     return 0;
   }
 
@@ -1126,7 +1040,6 @@ export async function createTransaction(transactionData: Omit<Transaction, 'id' 
 
     return dbTransactionToTransaction(data)
   } catch (error) {
-    console.error('Error creating transaction:', error)
     throw error
   }
 }
@@ -1142,7 +1055,6 @@ export async function getTransactionsByResident(residentId: string) {
     if (error) throw error
     return data.map(dbTransactionToTransaction)
   } catch (error) {
-    console.error('Error getting transactions:', error)
     throw error
   }
 }
@@ -1164,7 +1076,6 @@ export async function getTransactionsByFacility(facilityId: string, limit?: numb
     if (error) throw error
     return data.map(dbTransactionToTransaction)
   } catch (error) {
-    console.error('Error getting transactions:', error)
     throw error
   }
 }
@@ -1192,7 +1103,6 @@ export async function recordResidentWithdrawal(params: {
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error recording resident withdrawal:', error);
     throw error;
   }
 }
@@ -1225,7 +1135,6 @@ export async function getResidentWithdrawalsByFacility(params: {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching resident withdrawals:', error);
     return [];
   }
 }
@@ -1249,7 +1158,6 @@ export async function createServiceBatch(batchData: Omit<ServiceBatch, 'id' | 'c
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Error creating service batch:', error)
     throw error
   }
 }
@@ -1268,7 +1176,6 @@ export async function getServiceBatchesByFacility(facilityId: string) {
     if (error) throw error
     return data?.map(dbServiceBatchToServiceBatch) || []
   } catch (error) {
-    console.error('Error getting service batches:', error)
     throw error
   }
 }
@@ -1287,7 +1194,6 @@ export async function getServiceBatchById(batchId: string) {
     if (error) throw error
     return data ? dbServiceBatchToServiceBatch(data) : null
   } catch (error) {
-    console.error('Error getting service batch:', error)
     throw error
   }
 }
@@ -1332,7 +1238,6 @@ export async function addResidentToServiceBatch(batchId: string, residentId: str
       return data
     }
   } catch (error) {
-    console.error('Error adding resident to batch:', error)
     throw error
   }
 }
@@ -1348,7 +1253,6 @@ export async function removeResidentFromServiceBatch(batchId: string, residentId
     if (error) throw error
     await updateBatchTotals(batchId)
   } catch (error) {
-    console.error('Error removing resident from batch:', error)
     throw error
   }
 }
@@ -1367,7 +1271,6 @@ export async function updateServiceBatchItem(batchId: string, residentId: string
     await updateBatchTotals(batchId)
     return data
   } catch (error) {
-    console.error('Error updating batch item:', error)
     throw error
   }
 }
@@ -1446,7 +1349,6 @@ export async function postServiceBatch(batchId: string, postedBy: string, cheque
         processedCount++
         processedItems.push({ ...item, status: 'processed' })
       } catch (error) {
-        console.error('Error processing batch item:', error)
       }
     }
 
@@ -1471,11 +1373,9 @@ export async function postServiceBatch(batchId: string, postedBy: string, cheque
           .update({ cheque_number: chequeNumber as any })
           .eq('id', batchId)
       } catch (e: any) {
-        console.warn('Cheque number column missing or update failed for service_batches; skipping.', e?.message || e)
       }
     }
   } catch (error) {
-    console.error('Error posting service batch:', error)
     throw error
   }
 }
@@ -1500,7 +1400,6 @@ export async function deleteServiceBatch(batchId: string) {
 
     if (batchError) throw batchError
   } catch (error) {
-    console.error('Error deleting service batch:', error)
     throw error
   }
 }
@@ -1908,7 +1807,6 @@ export async function removeEntryFromDepositBatchDb(batchId: string, entryId: st
   
  
   if (error) {
-  console.error("Delete error:", error)
   throw error
 }
   await updateDepositBatchTotalsDb(batchId)
@@ -1945,7 +1843,6 @@ export async function postDepositBatchDb(batchId: string, processedBy: string) {
       p_amount: entry.amount
     })
     if (balanceError) {
-      console.warn('RPC adjust_resident_balance failed, falling back to direct update:', balanceError.message)
       const { data: residentRow, error: residentFetchError } = await supabase
         .from('residents')
         .select('trust_balance')
@@ -2193,7 +2090,6 @@ export async function createSignupInvitationForResident(
 
     return invitations;
   } catch (error) {
-    console.error('Error creating signup invitations:', error);
     throw error;
   }
 }
@@ -2255,17 +2151,14 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
         redirectTo: `https://vaultiq.ca`
       }),
     });
-    console.log(`✅ Invite request sent to server for ${invitation.email}`);
 
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      console.error('Failed to send invitation email:', err?.error || err);
       return false;
     }
 
     return true;
   } catch (e) {
-    console.error('Error sending invitation email:', e);
     return false;
   }
 }
@@ -2282,13 +2175,11 @@ export async function sendInviteByEmail(params: { email: string; role?: 'OM' | '
 
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      console.error('Failed to send invite:', err?.error || err);
       return false;
     }
 
     return true;
   } catch (e) {
-    console.error('Error sending invite:', e);
     return false;
   }
 }
@@ -2449,7 +2340,6 @@ export async function linkResidentToUser(residentId: string, userId: string): Pr
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error linking resident to user:', error);
     throw error;
   }
 }
@@ -2497,7 +2387,6 @@ export async function createPreAuthDebit(preAuthDebitData: Omit<PreAuthDebit, 'i
     if (error) throw error;
     return dbPreAuthDebitToPreAuthDebit(data);
   } catch (error) {
-    console.error('Error creating pre-auth debit:', error);
     throw error;
   }
 }
@@ -2519,7 +2408,6 @@ export async function getPreAuthDebitsByResident(residentId: string, month?: str
     if (error) throw error;
     return data.map(dbPreAuthDebitToPreAuthDebit);
   } catch (error) {
-    console.error('Error fetching pre-auth debits for resident:', error);
     throw error;
   }
 }
@@ -2541,7 +2429,6 @@ export async function getPreAuthDebitsByFacility(facilityId: string, month?: str
     if (error) throw error;
     return data.map(dbPreAuthDebitToPreAuthDebit);
   } catch (error) {
-    console.error('Error fetching pre-auth debits for facility:', error);
     throw error;
   }
 }
@@ -2572,7 +2459,6 @@ export async function updatePreAuthDebit(id: string, updates: Partial<PreAuthDeb
     if (error) throw error;
     return dbPreAuthDebitToPreAuthDebit(data);
   } catch (error) {
-    console.error('Error updating pre-auth debit:', error);
     throw error;
   }
 }
@@ -2618,7 +2504,6 @@ export async function createMonthlyPreAuthList(facilityId: string, month: string
     if (error) throw error;
     return dbMonthlyPreAuthListToMonthlyPreAuthList(data, preAuthDebits);
   } catch (error) {
-    console.error('Error creating monthly pre-auth list:', error);
     throw error;
   }
 }
@@ -2640,7 +2525,6 @@ export async function getMonthlyPreAuthList(facilityId: string, month: string): 
     const preAuthDebits = await getPreAuthDebitsByFacility(facilityId, month);
     return dbMonthlyPreAuthListToMonthlyPreAuthList(data, preAuthDebits);
   } catch (error) {
-    console.error('Error fetching monthly pre-auth list:', error);
     throw error;
   }
 }
@@ -2658,7 +2542,6 @@ export async function getFacilityMonthlyPreAuthLists(facilityId: string): Promis
     const allPreAuthDebits = await getPreAuthDebitsByFacility(facilityId);
     return data.map((list: any) => dbMonthlyPreAuthListToMonthlyPreAuthList(list, allPreAuthDebits));
   } catch (error) {
-    console.error('Error fetching facility monthly pre-auth lists:', error);
     throw error;
   }
 }
@@ -2681,7 +2564,6 @@ export async function closeMonthlyPreAuthList(listId: string, closedBy: string):
     const preAuthDebits = await getPreAuthDebitsByFacility(data.facility_id, data.month);
     return dbMonthlyPreAuthListToMonthlyPreAuthList(data, preAuthDebits);
   } catch (error) {
-    console.error('Error closing monthly pre-auth list:', error);
     throw error;
   }
 }
@@ -2713,7 +2595,6 @@ export async function updateCashBoxBalanceWithTransaction(
 
     return data;
   } catch (error) {
-    console.error('Error updating cash box balance:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -2732,7 +2613,6 @@ export async function resetCashBoxToMonthly(
 
     return data;
   } catch (error) {
-    console.error('Error resetting cash box:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -2764,7 +2644,6 @@ export async function getMonthlyCashBoxHistory(
 
     return data || [];
   } catch (error) {
-    console.error('Error getting monthly cash box history:', error);
     return [];
   }
 }

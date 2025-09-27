@@ -5,10 +5,6 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL || 'your-supabase-url'
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing Supabase environment variables.')
-  console.error('Please set the following environment variables:')
-  console.error('- VITE_SUPABASE_URL or SUPABASE_URL: Your Supabase project URL')
-  console.error('- SUPABASE_SERVICE_ROLE_KEY: Your Supabase service role key')
   process.exit(1)
 }
 
@@ -75,7 +71,6 @@ const testUsers = [
 
 async function createTestUser(userData) {
   try {
-    console.log(`Creating user: ${userData.email} (${userData.role})`)
     
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -85,12 +80,10 @@ async function createTestUser(userData) {
     })
 
     if (authError) {
-      console.error(`Auth error for ${userData.email}:`, authError.message)
       return null
     }
 
     if (!authData.user) {
-      console.error(`Failed to create auth user for ${userData.email}`)
       return null
     }
 
@@ -108,16 +101,13 @@ async function createTestUser(userData) {
       .single()
 
     if (userError) {
-      console.error(`Database error for ${userData.email}:`, userError.message)
       // Clean up auth user if database insertion fails
       await supabase.auth.admin.deleteUser(authData.user.id)
       return null
     }
 
-    console.log(`✅ Successfully created user: ${userData.email}`)
     return { authUser: authData.user, dbUser }
   } catch (error) {
-    console.error(`Error creating user ${userData.email}:`, error)
     return null
   }
 }
@@ -130,13 +120,11 @@ async function getFacilities() {
       .order('name')
 
     if (error) {
-      console.error('Error fetching facilities:', error.message)
       return []
     }
 
     return facilities
   } catch (error) {
-    console.error('Error fetching facilities:', error)
     return []
   }
 }
@@ -202,7 +190,6 @@ async function createSampleResidents(facilityId, residentUsers) {
     }
   ]
 
-  console.log('Creating sample residents...')
   
   for (const resident of residents) {
     try {
@@ -224,37 +211,28 @@ async function createSampleResidents(facilityId, residentUsers) {
         .single()
 
       if (error) {
-        console.error(`Error creating resident ${resident.name}:`, error.message)
       } else {
-        console.log(`✅ Created resident: ${resident.name} (${resident.residentId})`)
       }
     } catch (error) {
-      console.error(`Error creating resident ${resident.name}:`, error)
     }
   }
 }
 
 async function main() {
-  console.log('🚀 Starting test user creation...\n')
 
   // Get existing facilities
   const facilities = await getFacilities()
   
   if (facilities.length === 0) {
-    console.error('❌ No facilities found. Please run the database schema first to create sample facilities.')
     process.exit(1)
   }
 
-  console.log(`Found ${facilities.length} facilities:`)
-  facilities.forEach(f => console.log(`  - ${f.name} (${f.unique_code})`))
-  console.log('')
 
   // Assign facilities to users
   const sunriseManor = facilities.find(f => f.unique_code === 'SM001')
   const goldenYears = facilities.find(f => f.unique_code === 'GY002')
 
   if (!sunriseManor || !goldenYears) {
-    console.error('❌ Expected facilities not found. Please ensure facilities with codes SM001 and GY002 exist.')
     process.exit(1)
   }
 
@@ -279,42 +257,31 @@ async function main() {
     }
   }
 
-  console.log('\n📊 User Creation Summary:')
-  console.log(`✅ Successfully created: ${createdUsers.length} users`)
-  console.log(`❌ Failed: ${failedUsers.length} users`)
+  
 
   if (failedUsers.length > 0) {
-    console.log('\nFailed users:')
-    failedUsers.forEach(email => console.log(`  - ${email}`))
+    
   }
 
   // Create sample residents for testing
   const residentUsers = createdUsers.filter(u => u.dbUser.role === 'Resident')
   if (residentUsers.length > 0) {
-    console.log('\n🏠 Creating sample residents...')
+  
     await createSampleResidents(sunriseManor.id, residentUsers)
   }
 
-  console.log('\n🎉 Test user creation completed!')
-  console.log('\n📝 Test User Credentials:')
-  console.log('='.repeat(50))
+  
   
   testUsers.forEach(user => {
     const facilityName = user.facilityId === sunriseManor.id ? 'Sunrise Manor' : 
                         user.facilityId === goldenYears.id ? 'Golden Years' : 'N/A'
-    console.log(`${user.role.toUpperCase()} - ${user.name}`)
-    console.log(`  Email: ${user.email}`)
-    console.log(`  Password: ${user.password}`)
-    console.log(`  Facility: ${facilityName}`)
-    console.log('')
+    
   })
 
-  console.log('💡 Pro tip: Save these credentials for testing different user roles!')
   process.exit(0)
 }
 
 // Run the script
 main().catch(error => {
-  console.error('❌ Script failed:', error)
   process.exit(1)
 })

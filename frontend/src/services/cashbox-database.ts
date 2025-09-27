@@ -45,7 +45,6 @@ export async function getCashBoxBalance(facilityId: string): Promise<number> {
       .eq('facility_id', facilityId)
       .maybeSingle();
     if (error) {
-      console.error('Error getting cash box balance:', error);
       return 0;
     }
     if (!data) {
@@ -54,7 +53,6 @@ export async function getCashBoxBalance(facilityId: string): Promise<number> {
     }
     return Number((data as any).balance || 0);
   } catch (e) {
-    console.error('Error getting cash box balance:', e);
     return 0;
   }
 }
@@ -96,7 +94,6 @@ export async function getCashBoxTransactions(
     if (error) throw error;
     return (data as unknown as CashBoxTransaction[]) || [];
   } catch (e) {
-    console.error('Error getting cash box transactions:', e);
     return [];
   }
 }
@@ -118,7 +115,6 @@ export async function getCashBoxTransactionsByDate(
     if (error) throw error;
     return (data as unknown as CashBoxTransaction[]) || [];
   } catch (e) {
-    console.error('Error getting cash box transactions by date:', e);
     return [];
   }
 }

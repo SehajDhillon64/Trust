@@ -41,7 +41,6 @@ export async function initializeCashBoxBalance(
 
     return data;
   } catch (error) {
-    console.error('Error initializing cash box balance:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -60,7 +59,6 @@ export async function getCashBoxBalance(facilityId: string): Promise<number> {
      // Use maybeSingle instead of single to handle 0 or 1 row
 
     if (error) {
-      console.error('Error getting cash box balance:', error);
       return 0;
     }
     
@@ -72,7 +70,6 @@ export async function getCashBoxBalance(facilityId: string): Promise<number> {
     
     return data.balance || 0;
   } catch (error) {
-    console.error('Error getting cash box balance:', error);
     return 0; // Return 0 on error instead of default 2500
   }
 }
@@ -102,7 +99,6 @@ export async function processCashBoxTransaction(
 
     return data;
   } catch (error) {
-    console.error('Error processing cash box transaction:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -116,7 +112,6 @@ export async function resetCashBoxMonthly(
   userId: string
 ): Promise<{ success: boolean; error?: string; data?: any }> {
   try {
-    console.log('YHAN TK CHL RHA HAI')
     const { data, error } = await supabase.rpc('reset_cash_box_monthly', {
       p_facility_id: facilityId,
       p_user_id: userId
@@ -126,7 +121,6 @@ export async function resetCashBoxMonthly(
 
     return { success: true, data };
   } catch (error) {
-    console.error('Error resetting cash box:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -151,7 +145,6 @@ export async function getCashBoxTransactions(
 
     return data || [];
   } catch (error) {
-    console.error('Error getting cash box transactions:', error);
     return [];
   }
 }
@@ -163,11 +156,6 @@ export async function getCashBoxTransactionsByDate(
   endDateIso: string
 ): Promise<CashBoxTransaction[]> {
   try {
-     console.log("Fetching cash box transactions with params:", {
-      facilityId,
-      startDateIso,
-      endDateIso
-    });
     const { data, error } = await supabase
       .from('cash_box_transactions')
       .select('*')
@@ -175,11 +163,9 @@ export async function getCashBoxTransactionsByDate(
       .gte('created_at', startDateIso)
       .lte('created_at', endDateIso)
       .order('created_at', { ascending: false });
-       console.log(data);
     if (error) throw error;
     return (data as unknown as CashBoxTransaction[]) || [];
   } catch (error) {
-    console.error('Error getting cash box transactions by date:', error);
     return [];
   }
 }
@@ -263,7 +249,6 @@ export async function getMonthlyCashBoxHistory(
 
     return data || [];
   } catch (error) {
-    console.error('Error getting monthly cash box history:', error);
     return [];
   }
 }
