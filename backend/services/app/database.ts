@@ -2578,9 +2578,10 @@ export async function updateCashBoxBalanceWithTransaction(
   residentId: string | null,
   userId: string,
   transactionId: string
-): Promise<{ success: boolean; balance?: number; error?: string }> {
+): Promise<{ success: boolean; balance?: number; transaction?: any; error?: string }> {
   try {
-    const { data, error } = await supabase.rpc('update_cash_box_with_transaction', {
+    // Prefer new RPC name if available; fallback to legacy
+    const { data, error } = await supabase.rpc('process_cash_box_transaction', {
       p_facility_id: facilityId,
       p_transaction_type: transactionType,
       p_amount: amount,
@@ -2594,7 +2595,22 @@ export async function updateCashBoxBalanceWithTransaction(
 
     return data;
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    try {
+      // Fallback to legacy RPC for environments where migration hasn't been applied
+      const { data: legacyData, error: legacyError } = await supabase.rpc('update_cash_box_with_transaction', {
+        p_facility_id: facilityId,
+        p_transaction_type: transactionType,
+        p_amount: amount,
+        p_description: description,
+        p_resident_id: residentId,
+        p_user_id: userId,
+        p_transaction_id: transactionId
+      });
+      if (legacyError) throw legacyError;
+      return legacyData as any;
+    } catch (fallbackErr) {
+      return { success: false, error: fallbackErr instanceof Error ? fallbackErr.message : 'Unknown error' };
+    }
   }
 }
 

@@ -91,16 +91,13 @@ export default function CashBoxPage({ onBack }: CashBoxPageProps) {
 
     // Subscribe to new cash box transactions and refresh lists in real time
     const txSub = subscribeToCashBoxTransactions(currentFacility.id, async () => {
-      const [latestTxns, monthly] = await Promise.all([
-        supabase.rpc('get_cash_box_transactions_by_month_year', {
-          p_facility_id: currentFacility.id,
-          p_month: selectedMonth + 1,
-          p_year: selectedYear
-        })
-      ]);
-      setTransactions(latestTxns as any);
-      if ((monthly as any).data) {
-        setMonthlyTransactions((monthly as any).data);
+      const { data } = await supabase.rpc('get_cash_box_transactions_by_month_year', {
+        p_facility_id: currentFacility.id,
+        p_month: selectedMonth + 1,
+        p_year: selectedYear
+      });
+      if (data) {
+        setMonthlyTransactions(data as any[]);
       }
     });
   
