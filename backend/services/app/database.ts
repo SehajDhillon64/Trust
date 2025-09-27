@@ -697,7 +697,7 @@ export async function createResidentWithLinkedUser(params: {
 
     const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
     const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
-    const redirectTo = `${baseUrl}/reset-password/resident/`;
+    const redirectTo = `${baseUrl}/confirm-signup/resident/`;
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
     if (resetError) {
       throw resetError;
@@ -760,7 +760,7 @@ export async function createResidentWithLinkedUser(params: {
 
     const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
     const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
-    const redirectTo = `${baseUrl}/reset-password/resident/`;
+    const redirectTo = `${baseUrl}/confirm-signup/resident/`;
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
     if (resetError) {
       throw resetError;
@@ -869,7 +869,7 @@ export async function sendRoleBasedResetPasswordEmail(params: { email: string; r
     ? '/reset-password/om'
     : roleNorm === 'Vendor'
       ? '/reset-password/vendor'
-      : '/reset-password/resident';
+      : '/confirm-signup/resident';
   const redirectTo = `${baseUrl}${redirectPath}`;
 
   // Prefer admin client if available in this module; fallback to public supabase
@@ -2147,7 +2147,7 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
         facilityId: invitation.facilityId,
         residentId: invitation.residentId,
         name: undefined,
-        redirectTo: `https://trust1.netlify.app/reset-password/resident/`
+        redirectTo: `https://trust1.netlify.app/confirm-signup/resident/`
       }),
     });
 
