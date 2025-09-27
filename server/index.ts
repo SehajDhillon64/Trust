@@ -184,7 +184,7 @@ app.post('/api/auth/invite', async (req, res) => {
 
     const finalRedirect = (typeof redirectTo === 'string' && redirectTo)
       ? redirectTo
-      : `${siteUrl}/reset-password/resident/`;
+      : `${siteUrl}/confirm-signup/resident/`;
 
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: finalRedirect,
