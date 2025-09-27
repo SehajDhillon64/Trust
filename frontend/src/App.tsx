@@ -10,6 +10,7 @@ import POADashboard from './components/POADashboard';
 import VendorDashboard from './components/VendorDashboard';
 import ResetPasswordOM from './components/ResetPasswordOM';
 import ResetPasswordResident from './components/ResetPasswordResident';
+import ConfirmSignupResident from './components/ConfirmSignupResident';
 import ResetPasswordVendor from './components/ResetPasswordVendor';
 
 function AccessDenied() {
@@ -125,6 +126,8 @@ function AppContent() {
       <Route path="/reset-password/om" element={<ResetPasswordOM />} />
       <Route path="/reset-password/resident" element={<ResetPasswordResident />} />
       <Route path="/reset-password/resident/" element={<ResetPasswordResident />} />
+      <Route path="/confirm-signup/resident" element={<ConfirmSignupResident />} />
+      <Route path="/confirm-signup/resident/" element={<ConfirmSignupResident />} />
       <Route path="/reset-password/vendor" element={<ResetPasswordVendor />} />
 
       <Route

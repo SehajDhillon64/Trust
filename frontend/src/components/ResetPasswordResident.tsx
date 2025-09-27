@@ -118,47 +118,46 @@ export default function ResetPasswordResident() {
         <p className="text-gray-600 mb-4">First, verify your resident details to continue.</p>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-2 rounded mb-3">{error}</div>}
         {message && <div className="bg-green-50 border border-green-200 text-green-700 text-sm p-2 rounded mb-3">{message}</div>}
-
-        {/* Verification Section */}
+        {/* Verification */}
         <form onSubmit={handleVerify} className="space-y-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium mb-1 text-black">Resident Full Name</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-              placeholder="e.g., Mary Thompson"
-              disabled={lookupLoading || verified}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-black">Date of Birth</label>
-            <input
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-              disabled={lookupLoading || verified}
-              required
-            />
-          </div>
-          {!verified && (
-            <button
-              type="submit"
-              disabled={lookupLoading || verifying || !resident}
-              className="w-full bg-blue-600 text-white rounded py-2"
-            >
-              {lookupLoading ? 'Loading…' : verifying ? 'Verifying…' : 'Verify Resident'}
-            </button>
-          )}
-          {verified && (
-            <div className="text-green-700 bg-green-50 border border-green-200 text-sm p-2 rounded">Verification successful.</div>
-          )}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-black">Resident Full Name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+                placeholder="e.g., Mary Thompson"
+                disabled={lookupLoading || verified}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-black">Date of Birth</label>
+              <input
+                type="date"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+                disabled={lookupLoading || verified}
+                required
+              />
+            </div>
+            {!verified && (
+              <button
+                type="submit"
+                disabled={lookupLoading || verifying || !resident}
+                className="w-full bg-blue-600 text-white rounded py-2"
+              >
+                {lookupLoading ? 'Loading…' : verifying ? 'Verifying…' : 'Verify Resident'}
+              </button>
+            )}
+            {verified && (
+              <div className="text-green-700 bg-green-50 border border-green-200 text-sm p-2 rounded">Verification successful.</div>
+            )}
         </form>
 
-        {/* Password Reset Section */}
+        {/* Password Reset */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1 text-black">New Password</label>
