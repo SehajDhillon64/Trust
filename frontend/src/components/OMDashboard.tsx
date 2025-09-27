@@ -43,14 +43,7 @@ export default function OMDashboard() {
   const { residents, transactions, getFacilityResidents, getFacilityTransactions, getTotalTrustBalance, getMonthlyCashBoxHistory, getMonthlyManualMoneyReport, getBatchReports, isLoading, getFacilityServiceBatches, getFacilityPreAuthDebits, getDepositBatches } = useData();
   const { user, logout, currentFacility } = useAuth();
 
-  // Debug logging
-  console.log('OMDashboard Debug:', {
-    user,
-    currentFacility,
-    residentsCount: residents?.length,
-    transactionsCount: transactions?.length,
-    isLoading
-  });
+  
 
   const [totalBalances, setTotalBalances] = useState<number>(0);
   
@@ -64,7 +57,6 @@ export default function OMDashboard() {
         const balance = await getTotalTrustBalance(currentFacility.id);
         setTotalBalances(balance);
       } catch (err) {
-        console.error("Error fetching total trust balance:", err);
         setTotalBalances(0);
       
       }
@@ -115,7 +107,6 @@ export default function OMDashboard() {
 
         // Cash Box: sum withdrawals from cash_box_transactions in month
         const cashTx = await getCashBoxTransactionsByDate(currentFacility.id, startIso, endIso);
-        console.log("CashBox Transactions:", cashTx);
         const cashWithdrawals = cashTx.filter(t => t.transaction_type === 'withdrawal');
         setMonthlyCashWithdrawalTotal(cashTx.reduce((s, t) => s + Number(t.amount || 0), 0));
 
@@ -131,7 +122,6 @@ export default function OMDashboard() {
         if (error) throw error;
         setAccountsClosedByCheque(rw || []);
       } catch (e) {
-        console.warn('Failed loading monthly cashbox/closures', e);
         
         setAccountsClosedByCheque([]);
       }

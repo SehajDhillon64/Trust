@@ -110,7 +110,6 @@ export default function OMInvoicesPage() {
       await refreshData();
       alert('Exported invoice items to a new service batch.');
     } catch (e) {
-      console.error('Failed to export to service batch:', e);
       alert('Failed to export to service batch');
     } finally {
       setIsExporting(false);

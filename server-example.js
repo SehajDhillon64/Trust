@@ -69,7 +69,6 @@ app.post('/api/stripe/accounts', async (req, res) => {
       updatedAt: new Date(),
     });
   } catch (error) {
-    console.error('Error creating account:', error);
     res.status(400).json({ 
       error: error.message,
       type: error.type,
@@ -101,7 +100,6 @@ app.get('/api/stripe/accounts/:accountId', async (req, res) => {
       updatedAt: new Date(),
     });
   } catch (error) {
-    console.error('Error retrieving account:', error);
     res.status(400).json({ 
       error: error.message,
       type: error.type,
@@ -129,7 +127,6 @@ app.post('/api/stripe/account-links', async (req, res) => {
 
     res.json({ url: accountLink.url });
   } catch (error) {
-    console.error('Error creating account link:', error);
     res.status(400).json({ 
       error: error.message,
       type: error.type,
@@ -169,7 +166,6 @@ app.post('/api/stripe/payment-intents', async (req, res) => {
       status: paymentIntent.status,
     });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
     res.status(400).json({ 
       error: error.message,
       type: error.type,
@@ -188,7 +184,6 @@ app.get('/api/stripe/accounts/:accountId/balance', async (req, res) => {
 
     res.json(balance);
   } catch (error) {
-    console.error('Error retrieving balance:', error);
     res.status(400).json({ 
       error: error.message,
       type: error.type,
@@ -224,7 +219,6 @@ app.get('/api/stripe/accounts/:accountId/transactions', async (req, res) => {
 
     res.json(transactions);
   } catch (error) {
-    console.error('Error retrieving transactions:', error);
     res.status(400).json({ 
       error: error.message,
       type: error.type,
@@ -246,7 +240,6 @@ app.get('/api/stripe/accounts/:accountId/payouts', async (req, res) => {
 
     res.json(payouts.data);
   } catch (error) {
-    console.error('Error retrieving payouts:', error);
     res.status(400).json({ 
       error: error.message,
       type: error.type,
@@ -265,40 +258,39 @@ app.post('/webhooks/stripe', (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
-    console.log('Webhook signature verification failed.', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   // Handle the event
-  console.log(`Received webhook: ${event.type}`);
+  
 
   switch (event.type) {
     case 'account.updated':
-      console.log('Account updated:', event.data.object.id);
+      
       // Update your database with the account changes
       break;
     case 'payment_intent.succeeded':
-      console.log('Payment succeeded:', event.data.object.id);
+      
       // Handle successful payment
       break;
     case 'payment_intent.payment_failed':
-      console.log('Payment failed:', event.data.object.id);
+      
       // Handle failed payment
       break;
     case 'transfer.created':
-      console.log('Transfer created:', event.data.object.id);
+      
       // Handle transfer creation
       break;
     case 'payout.paid':
-      console.log('Payout paid:', event.data.object.id);
+      
       // Handle successful payout
       break;
     case 'payout.failed':
-      console.log('Payout failed:', event.data.object.id);
+      
       // Handle failed payout
       break;
     default:
-      console.log(`Unhandled event type ${event.type}`);
+      
   }
 
   res.json({ received: true });
@@ -306,7 +298,6 @@ app.post('/webhooks/stripe', (req, res) => {
 
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error('Server error:', error);
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
@@ -315,28 +306,6 @@ app.use((error, req, res, next) => {
 
 // Start server
 app.listen(port, () => {
-  console.log(`
-🚀 Stripe Connect Server running on port ${port}
-
-Environment: ${process.env.NODE_ENV || 'development'}
-Stripe Mode: ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'LIVE' : 'TEST'}
-
-Available endpoints:
-  GET  /health
-  POST /api/stripe/accounts
-  GET  /api/stripe/accounts/:accountId
-  POST /api/stripe/account-links
-  POST /api/stripe/payment-intents
-  GET  /api/stripe/accounts/:accountId/balance
-  GET  /api/stripe/accounts/:accountId/transactions
-  GET  /api/stripe/accounts/:accountId/payouts
-  POST /webhooks/stripe
-
-💡 Don't forget to:
-  1. Set your environment variables (.env file)
-  2. Configure webhook endpoints in Stripe Dashboard
-  3. Test with Stripe test cards
-  `);
 });
 
 module.exports = app;

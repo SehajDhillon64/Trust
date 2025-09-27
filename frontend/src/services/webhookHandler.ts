@@ -17,11 +17,9 @@ class StripeWebhookService {
 
   // Process a webhook event
   async processEvent(event: StripeWebhookEvent): Promise<void> {
-    console.log(`Processing webhook event: ${event.type}`, event.id);
 
     const handlers = this.handlers.get(event.type);
     if (!handlers || handlers.length === 0) {
-      console.log(`No handlers registered for event type: ${event.type}`);
       return;
     }
 
@@ -31,7 +29,6 @@ class StripeWebhookService {
         try {
           await handler(event);
         } catch (error) {
-          console.error(`Error executing handler for ${event.type}:`, error);
           // Don't throw - we want to continue processing other handlers
         }
       })
@@ -46,7 +43,6 @@ class StripeWebhookService {
       // This should use Stripe's webhook signature verification
       return true;
     } catch (error) {
-      console.error('Webhook signature verification failed:', error);
       return false;
     }
   }
@@ -57,7 +53,6 @@ export const webhookService = new StripeWebhookService();
 
 // Default event handlers
 webhookService.on('account.updated', async (event: StripeWebhookEvent) => {
-  console.log('Connected account updated:', event.data.object);
   
   // Update local database with account changes
   const account = event.data.object;
@@ -71,14 +66,11 @@ webhookService.on('account.updated', async (event: StripeWebhookEvent) => {
     //   requirements: account.requirements,
     // });
     
-    console.log(`Updated account ${account.id} in database`);
   } catch (error) {
-    console.error('Failed to update account in database:', error);
   }
 });
 
 webhookService.on('payment_intent.succeeded', async (event: StripeWebhookEvent) => {
-  console.log('Payment succeeded:', event.data.object);
   
   const paymentIntent = event.data.object;
   
@@ -93,7 +85,6 @@ webhookService.on('payment_intent.succeeded', async (event: StripeWebhookEvent) 
     //   createdAt: new Date(paymentIntent.created * 1000),
     // });
     
-    console.log(`Recorded successful payment ${paymentIntent.id}`);
     
     // Send confirmation email to customer
     // await sendPaymentConfirmationEmail(paymentIntent);
@@ -102,12 +93,10 @@ webhookService.on('payment_intent.succeeded', async (event: StripeWebhookEvent) 
     // await fulfillOrder(paymentIntent.metadata.order_id);
     
   } catch (error) {
-    console.error('Failed to process successful payment:', error);
   }
 });
 
 webhookService.on('payment_intent.payment_failed', async (event: StripeWebhookEvent) => {
-  console.log('Payment failed:', event.data.object);
   
   const paymentIntent = event.data.object;
   
@@ -118,14 +107,11 @@ webhookService.on('payment_intent.payment_failed', async (event: StripeWebhookEv
     // Send failure notification to customer
     // await sendPaymentFailureNotification(paymentIntent);
     
-    console.log(`Processed failed payment ${paymentIntent.id}`);
   } catch (error) {
-    console.error('Failed to process payment failure:', error);
   }
 });
 
 webhookService.on('payment_method.attached', async (event: StripeWebhookEvent) => {
-  console.log('Payment method attached:', event.data.object);
   
   const paymentMethod = event.data.object;
   
@@ -133,14 +119,11 @@ webhookService.on('payment_method.attached', async (event: StripeWebhookEvent) =
     // Update customer's saved payment methods
     // await updateCustomerPaymentMethods(paymentMethod.customer, paymentMethod);
     
-    console.log(`Updated payment methods for customer ${paymentMethod.customer}`);
   } catch (error) {
-    console.error('Failed to update payment methods:', error);
   }
 });
 
 webhookService.on('transfer.created', async (event: StripeWebhookEvent) => {
-  console.log('Transfer created:', event.data.object);
   
   const transfer = event.data.object;
   
@@ -155,14 +138,11 @@ webhookService.on('transfer.created', async (event: StripeWebhookEvent) => {
     //   createdAt: new Date(transfer.created * 1000),
     // });
     
-    console.log(`Recorded transfer ${transfer.id}`);
   } catch (error) {
-    console.error('Failed to record transfer:', error);
   }
 });
 
 webhookService.on('payout.paid', async (event: StripeWebhookEvent) => {
-  console.log('Payout paid:', event.data.object);
   
   const payout = event.data.object;
   
@@ -173,14 +153,11 @@ webhookService.on('payout.paid', async (event: StripeWebhookEvent) => {
     // Notify the connected account about the payout
     // await notifyAccountOfPayout(event.account, payout);
     
-    console.log(`Processed payout ${payout.id} for account ${event.account}`);
   } catch (error) {
-    console.error('Failed to process payout:', error);
   }
 });
 
 webhookService.on('payout.failed', async (event: StripeWebhookEvent) => {
-  console.log('Payout failed:', event.data.object);
   
   const payout = event.data.object;
   
@@ -191,14 +168,11 @@ webhookService.on('payout.failed', async (event: StripeWebhookEvent) => {
     // Notify the connected account about the failure
     // await notifyAccountOfPayoutFailure(event.account, payout);
     
-    console.log(`Processed failed payout ${payout.id} for account ${event.account}`);
   } catch (error) {
-    console.error('Failed to process payout failure:', error);
   }
 });
 
 webhookService.on('application_fee.created', async (event: StripeWebhookEvent) => {
-  console.log('Application fee created:', event.data.object);
   
   const fee = event.data.object;
   
@@ -213,14 +187,11 @@ webhookService.on('application_fee.created', async (event: StripeWebhookEvent) =
     //   createdAt: new Date(fee.created * 1000),
     // });
     
-    console.log(`Recorded application fee ${fee.id}`);
   } catch (error) {
-    console.error('Failed to record application fee:', error);
   }
 });
 
 webhookService.on('customer.created', async (event: StripeWebhookEvent) => {
-  console.log('Customer created:', event.data.object);
   
   const customer = event.data.object;
   
@@ -228,14 +199,11 @@ webhookService.on('customer.created', async (event: StripeWebhookEvent) => {
     // Sync customer data with your database
     // await syncCustomerData(customer);
     
-    console.log(`Synced customer ${customer.id}`);
   } catch (error) {
-    console.error('Failed to sync customer data:', error);
   }
 });
 
 webhookService.on('charge.dispute.created', async (event: StripeWebhookEvent) => {
-  console.log('Dispute created:', event.data.object);
   
   const dispute = event.data.object;
   
@@ -246,9 +214,7 @@ webhookService.on('charge.dispute.created', async (event: StripeWebhookEvent) =>
     // Notify the connected account
     // await notifyAccountOfDispute(event.account, dispute);
     
-    console.log(`Processed dispute ${dispute.id}`);
   } catch (error) {
-    console.error('Failed to process dispute:', error);
   }
 });
 
@@ -276,7 +242,6 @@ export const createWebhookEndpoint = (endpointSecret: string) => {
       
       return new Response('OK', { status: 200 });
     } catch (error) {
-      console.error('Webhook processing error:', error);
       return new Response('Webhook processing failed', { status: 500 });
     }
   };

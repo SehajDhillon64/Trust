@@ -240,7 +240,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             const latest = await getServiceBatchesByFacility(currentFacility.id);
             setServiceBatches(latest as ServiceBatch[]);
           } catch (e) {
-            console.warn('Failed to reload service batches', e);
           }
         };
         // Set up subscriptions
@@ -329,7 +328,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             setResidents(residentsData);
             setInvoices(vendorInvs);
           } catch (e) {
-            console.warn('Failed to load vendor-linked facility data', e);
           }
           setIsLoading(false);
           return;
@@ -346,7 +344,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
           );
           setResidents(residentsByFacility.flat());
         } catch (e) {
-          console.warn('Failed to load residents for vendor facilities', e);
         }
 
         // Load vendor invoices
@@ -354,7 +351,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const vendorInvs = await getInvoicesByVendorDb(user.id);
           setInvoices(vendorInvs);
         } catch (e) {
-          console.warn('Failed to load vendor invoices', e);
         }
 
         setIsLoading(false);
@@ -407,7 +403,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             );
             setResidents(residentsByFacility.flat());
           } catch (e) {
-            console.warn('Failed to load residents for all facilities (admin overview)', e);
           }
         } else if (currentFacility) {
           const facilityData = await getFacilityById(currentFacility.id);
@@ -440,7 +435,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             const v = await listVendorsForFacility(currentFacility.id);
             setVendors(v);
           } catch (e) {
-            console.warn('Failed to load vendors for facility', e);
           }
           
           // Update cash box balance
@@ -451,7 +445,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (err) {
-      console.error('Error loading data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setIsLoading(false);
@@ -525,7 +518,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     
     } catch (err) {
-      console.error('Error adding resident:', err);
       throw err;
     }
   };
@@ -537,7 +529,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         prev.map(r => r.id === id ? updatedResident : r)
       );
     } catch (err) {
-      console.error('Error updating resident:', err);
       throw err;
     }
   };
@@ -573,7 +564,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             withdrawnBy: transactionData.createdBy
           });
         } catch (e) {
-          console.warn('Failed to record resident withdrawal entry:', (e as any)?.message || e);
         }
       }
 
@@ -594,7 +584,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         );
       }
     } catch (err) {
-      console.error('Error adding transaction:', err);
       throw err;
     }
   };
@@ -646,7 +635,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       await refreshData();
       return { success: true };
     } catch (e) {
-      console.error('Error closing resident trust:', e);
       return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
     }
   };
@@ -669,14 +657,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setFacilities(prev => [...prev, newFacility]);
       return newFacility;
     } catch (err) {
-      console.error('Error adding facility:', err);
       throw err;
     }
   };
 
   const updateFacility = async (id: string, updates: Partial<Facility>) => {
     // TODO: Implement updateFacility in database service
-    console.log('Facility update not yet implemented:', id, updates);
   };
 
   // Service batch functions
@@ -700,7 +686,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return newBatchId;
     } catch (err) {
-      console.error('Error creating service batch:', err);
       throw err;
     }
   };
@@ -739,7 +724,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const updateCashBoxBalance = async (facilityId: string, balance: number) => {
     // This function should not be called directly anymore
     // Use cash box transactions instead
-    console.warn('updateCashBoxBalance is deprecated. Use cash box transactions instead.');
   };
 
   // New cash box transaction function
@@ -819,11 +803,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Mock implementations for features not yet implemented
   const addAssignment = (assignment: Omit<Assignment, 'id' | 'assignedAt'>) => {
-    console.log('Assignment feature not yet implemented:', assignment);
   };
 
   const deleteAssignment = (assignmentId: string) => {
-    console.log('Delete assignment not yet implemented:', assignmentId);
   };
 
   const getFacilityAssignments = (facilityId: string): Assignment[] => {
@@ -839,7 +821,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setServiceBatches(prev => prev.map(b => (b.id === batchId ? updated : b)));
       }
     } catch (error) {
-      console.error('Error adding resident to batch:', error);
       throw error;
     }
   };
@@ -853,7 +834,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setServiceBatches(prev => prev.map(b => (b.id === batchId ? updated : b)));
       }
     } catch (error) {
-      console.error('Error removing resident from batch:', error);
       throw error;
     }
   };
@@ -867,7 +847,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setServiceBatches(prev => prev.map(b => (b.id === batchId ? updated : b)));
       }
     } catch (error) {
-      console.error('Error updating batch item:', error);
       throw error;
     }
   };
@@ -881,7 +860,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setServiceBatches(latest as ServiceBatch[]);
       }
     } catch (error) {
-      console.error('Error posting service batch:', error);
       throw error;
     }
   };
@@ -895,7 +873,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error deleting service batch:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to delete batch' };
     }
   };
@@ -916,7 +893,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const newPreAuthDebit = await createPreAuthDebit(preAuthDebitData);
       setPreAuthDebits(prev => [newPreAuthDebit, ...prev]);
     } catch (err) {
-      console.error('Error adding pre-auth debit:', err);
       throw err;
     }
   };
@@ -928,7 +904,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         prev.map(debit => debit.id === id ? updatedPreAuthDebit : debit)
       );
     } catch (err) {
-      console.error('Error updating pre-auth debit:', err);
       throw err;
     }
   };
@@ -957,7 +932,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setMonthlyPreAuthLists(prev => [newList, ...prev]);
       })
       .catch(err => {
-        console.error('Error creating monthly pre-auth list:', err);
       });
     
     // Return a temporary ID (in real implementation, this should be async)
@@ -972,7 +946,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         );
       })
       .catch(err => {
-        console.error('Error closing monthly pre-auth list:', err);
       });
   };
 
@@ -1060,7 +1033,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       
       return { success: true };
     } catch (error) {
-      console.error('Error processing pre-auth debit:', error);
       return { success: false, error: 'Failed to process pre-auth debit' };
     }
   };
@@ -1115,7 +1087,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setDepositBatches(prev => [...prev, batchData]);
       return { success: true, batchId: batchData.id };
     } catch (err) {
-      console.error('Error creating deposit batch:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to create deposit batch' };
     }
   };
@@ -1131,7 +1102,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, error: 'Failed to create deposit batch' };
     } catch (err) {
-      console.error('Error creating deposit batch:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to create deposit batch' };
     }
   };
@@ -1182,7 +1152,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       return { success: true };
     } catch (err) {
-      console.error('Error closing deposit batch:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to close deposit batch' };
     }
   };
@@ -1202,7 +1171,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error closing deposit batch:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to close deposit batch' };
     }
   };
@@ -1220,7 +1188,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error adding entry to deposit batch:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to add entry' };
     }
   };
@@ -1238,7 +1205,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error updating deposit batch entry:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to update entry' };
     }
   };
@@ -1253,7 +1219,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error removing deposit batch entry:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to remove entry' };
     }
   };
@@ -1267,7 +1232,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return { success: true };
     } catch (err) {
-      console.error('Error deleting deposit batch:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to delete batch' };
     }
   };
@@ -1385,7 +1349,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const v = await listVendorsForFacility(facilityId);
       setVendors(v);
     } catch (e) {
-      console.warn('Failed to refresh vendors', e);
     }
   };
 

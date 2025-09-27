@@ -66,7 +66,6 @@ export default function AdminDashboard() {
       const list = await listOfficeManagers();
       setOmUsers(list);
     } catch (e) {
-      console.error('Failed to load OM users', e);
     } finally {
       setIsLoadingOms(false);
     }
@@ -115,7 +114,6 @@ export default function AdminDashboard() {
 
       alert(`Manager ${managerForm.name} has been created and assigned. No email was sent.`);
     } catch (error) {
-      console.error('Error sending invitation:', error);
       alert(`There was an error processing the manager assignment.`);
     }
     
@@ -147,7 +145,6 @@ export default function AdminDashboard() {
       
       alert(`Additional manager ${additionalManagerForm.name} has been created and assigned. No email was sent.`);
     } catch (error) {
-      console.error('Error sending invitation:', error);
       alert(`There was an error adding the additional manager.`);
     }
     
@@ -204,7 +201,6 @@ export default function AdminDashboard() {
         });
         alert(`Facility "${facilityForm.name}" has been added successfully. OM account created with community-name password. Ask them to reset it.`);
       } catch (error) {
-        console.error('Error sending invitation:', error);
         alert(`Facility "${facilityForm.name}" has been added successfully, but there was an error provisioning the OM user.`);
       }
     } else {
@@ -254,7 +250,6 @@ export default function AdminDashboard() {
       await reloadOms();
       alert(`${managerName} access cleared.`);
     } catch (e) {
-      console.error('Failed to clear OM facility:', e);
       alert('Failed to remove access.');
     }
   };

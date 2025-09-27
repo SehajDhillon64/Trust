@@ -17,14 +17,7 @@ export default function POADashboard() {
   const { residents, transactions, getResidentTransactions, updateResident, facilities, getResidentPreAuthDebits, isLoading } = useData();
   const { user, logout } = useAuth();
 
-  // Debug logging
-  console.log('POADashboard Debug:', {
-    user,
-    residentsCount: residents?.length,
-    transactionsCount: transactions?.length,
-    facilitiesCount: facilities?.length,
-    isLoading
-  });
+  
 
   // Find resident linked to this user
   const linkedResident = residents.find(r => r.linkedUserId === user?.id);
@@ -34,8 +27,7 @@ export default function POADashboard() {
   // Find the facility for this resident
   const residentFacility = linkedResident ? facilities.find(f => f.id === linkedResident.facilityId) : null;
 
-  console.log('POADashboard - linkedResident:', linkedResident);
-  console.log('POADashboard - residentFacility:', residentFacility);
+  
 
   const handleServiceAuthorizationChange = (service: keyof typeof linkedResident.allowedServices, authorized: boolean) => {
     if (!linkedResident) return;

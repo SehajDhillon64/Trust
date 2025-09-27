@@ -27,7 +27,6 @@ app.use(express.json());
 const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://qqcauorhdutkszufvrlm.supabase.co';
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1b3JoZHV0a3N6dWZ2cmxtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDE1Mjk0MCwiZXhwIjoyMDY5NzI4OTQwfQ.0a8JHBlmN7tqpwEm_RVbVzuNBpzzjtczqvk2JWIohHE';
 const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
-console.log('SERVICE ROLE KEY length:', serviceRoleKey?.length);
 if (!supabaseUrl) {
   throw new Error('Missing Supabase URL. Set SUPABASE_URL (preferred) or VITE_SUPABASE_URL in your environment.');
 }
@@ -181,7 +180,6 @@ app.post('/api/auth/create-user', async (req, res) => {
 
 // Provision a new application user (creates auth user, profile, links resident, handles emails)
 app.post('/api/users/provision', async (req, res) => {
-  console.log('hi');
   try {
     const {
       email,
@@ -193,7 +191,7 @@ app.post('/api/users/provision', async (req, res) => {
       companyId
     } = req.body || {};
 
-    console.log('[provision] incoming', { email, role, facilityId: !!facilityId, residentId: !!residentId, hasName: !!name, communityName });
+    
 
     if (!email || typeof email !== 'string') {
       return res.status(400).json({ error: 'email is required' });
@@ -236,7 +234,6 @@ app.post('/api/users/provision', async (req, res) => {
           page += 1;
         }
       } catch (e: any) {
-        console.error('[provision] listUsers failed', e?.message || e);
       }
       return null;
     }
@@ -261,7 +258,6 @@ app.post('/api/users/provision', async (req, res) => {
         user_metadata: userMetadata
       });
       if (authCreateErr) {
-        console.warn('[provision] createUser error (OM):', authCreateErr?.message || authCreateErr);
         // If already exists, try to find
         const id = await findAuthUserIdByEmail(email);
         if (!id) return res.status(400).json({ error: authCreateErr.message });
@@ -279,7 +275,6 @@ app.post('/api/users/provision', async (req, res) => {
         user_metadata: userMetadata
       });
       if (authCreateErr) {
-        console.warn('[provision] createUser error (POA/Resident):', authCreateErr?.message || authCreateErr);
         const id = await findAuthUserIdByEmail(email);
         if (!id) return res.status(400).json({ error: authCreateErr.message });
         authUserId = id;
@@ -310,7 +305,6 @@ app.post('/api/users/provision', async (req, res) => {
       .single();
 
     if (profileErr) {
-      console.warn('[provision] upsert profile error:', profileErr?.message || profileErr);
       return res.status(400).json({ error: `Failed to upsert user profile: ${profileErr.message}` });
     }
 
@@ -321,7 +315,6 @@ app.post('/api/users/provision', async (req, res) => {
         .update({ linked_user_id: profileRow.id })
         .eq('id', residentId);
       if (linkErr) {
-        console.warn('[provision] link resident error:', linkErr?.message || linkErr);
         return res.status(400).json({ error: `Failed to link resident: ${linkErr.message}` });
       }
     }
@@ -337,14 +330,12 @@ app.post('/api/users/provision', async (req, res) => {
         // Tolerate duplicate/invite exists errors
         const msg = (inviteErr as any)?.message?.toLowerCase?.() || '';
         if (!msg.includes('already') && !msg.includes('exist') && !msg.includes('registered')) {
-          console.warn('[provision] invite error:', inviteErr?.message || inviteErr);
           return res.status(400).json({ error: `Failed to send invite: ${inviteErr.message}` });
         }
       }
     }
     
 
-    console.log('[provision] success', { authUserId });
     return res.json({
       success: true,
       user: {
@@ -355,7 +346,6 @@ app.post('/api/users/provision', async (req, res) => {
       }
     });
   } catch (err: any) {
-    console.error('[provision] unhandled error:', err?.message || err);
     return res.status(500).json({ error: err?.message || 'Failed to provision user' });
   }
 });
@@ -557,7 +547,6 @@ app.post('/api/paypal/orders', async (req, res) => {
     const order = await client.execute(request);
     return res.json(order.result);
   } catch (err: any) {
-    console.error('PayPal create order error:', err);
     return res.status(500).json({ error: err?.message || 'Failed to create PayPal order' });
   }
 });
@@ -657,19 +646,15 @@ app.post('/api/paypal/orders/:orderId/capture', async (req, res) => {
       });
 
     if (insertErr) {
-      console.error('Failed to save transaction:', insertErr);
     }
 
     return res.json({ success: true, capture: capture.result });
   } catch (err: any) {
-    console.error('PayPal capture error:', err);
     return res.status(500).json({ error: err?.message || 'Failed to capture PayPal order' });
   }
 });
 
 app.listen(port, () => {
-  // eslint-disable-next-line no-console
-  console.log(`API server listening on http://localhost:${port}`);
 });
 
 // =============================
@@ -713,7 +698,6 @@ app.get('/api/vendors', async (req, res) => {
 
     return res.json(vendors || []);
   } catch (err: any) {
-    console.error('[GET /api/vendors] unexpected error:', err?.message || err);
     return res.status(500).json({ error: err?.message || 'Failed to list vendors' });
   }
 });
@@ -779,7 +763,6 @@ app.post('/api/vendors', async (req, res) => {
 
     return res.json({ success: true, vendor: existingProfile });
   } catch (err: any) {
-    console.error('[POST /api/vendors] unexpected error:', err?.message || err);
     return res.status(500).json({ error: err?.message || 'Failed to create/link vendor' });
   }
 });

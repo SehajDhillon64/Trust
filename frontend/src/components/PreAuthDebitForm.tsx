@@ -47,7 +47,6 @@ export default function PreAuthDebitForm({ residentId, onClose, onSuccess }: Pre
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error creating pre-authorization:', error);
     } finally {
       setIsSubmitting(false);
     }
