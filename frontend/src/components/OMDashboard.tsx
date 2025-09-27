@@ -1220,12 +1220,6 @@ export default function OMDashboard() {
               <DepositBatchHistory />
             </div>
 
-            <button
-              onClick={() => setActiveView('overview')}
-              className="text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
-            >
-              <span>← Back to Overview</span>
-            </button>
           </div>
         )}
 
