@@ -9,7 +9,7 @@ interface ServiceBatchHistoryProps {
   onBack: () => void;
 }
 
-type ServiceType = 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair';
+type ServiceType = 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous';
 
 export default function ServiceBatchHistory({ onBack }: ServiceBatchHistoryProps) {
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
@@ -39,7 +39,8 @@ export default function ServiceBatchHistory({ onBack }: ServiceBatchHistoryProps
     footcare: 'Foot Care',
     pharmacy: 'Pharmacy',
     cable: 'Cable TV',
-    wheelchairRepair: 'Wheelchair Repair'
+    wheelchairRepair: 'Wheelchair Repair',
+    miscellaneous: 'Miscellaneous'
   };
 
   const facilityResidents = currentFacility ? getFacilityResidents(currentFacility.id) : [];
@@ -547,7 +548,8 @@ function BatchDetailsModal({
     footcare: 'Foot Care',
     pharmacy: 'Pharmacy',
     cable: 'Cable TV',
-    wheelchairRepair: 'Wheelchair Repair'
+    wheelchairRepair: 'Wheelchair Repair',
+    miscellaneous: 'Miscellaneous'
   };
 
   return (

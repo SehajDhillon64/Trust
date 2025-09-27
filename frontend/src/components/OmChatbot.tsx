@@ -32,7 +32,7 @@ export default function OmChatbot() {
       </div>
       <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="text-sm text-gray-600">Try questions like: What is balance in 'John Doe' account? Recent 5 transactions in 'Jane Smith' account. All transactions in haircare batch. Recent online transactions for this month. Recent deposit batch transactions. Recent cash box transactions.</div>
+          <div className="text-sm text-gray-600">Try questions like: What is balance in 'John Doe' account? Recent 5 transactions in 'Jane Smith' account. All transactions in haircare or miscellaneous batch. Recent online transactions for this month. Recent deposit batch transactions. Recent cash box transactions.</div>
         ) : (
           messages.map(m => (
             <div key={m.id} className={`whitespace-pre-wrap ${m.role === 'user' ? 'text-gray-900' : 'text-gray-800'}`}>

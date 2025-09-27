@@ -164,8 +164,9 @@ export default function BatchTransactionForm({ onClose }: BatchTransactionFormPr
     footcare: 'Foot Care',
     pharmacy: 'Pharmacy',
     cable: 'Cable TV',
-    wheelchairRepair: 'Wheelchair Repair'
-  };
+    wheelchairRepair: 'Wheelchair Repair',
+    miscellaneous: 'Miscellaneous'
+  } as const;
 
   return (
     <>

@@ -117,7 +117,7 @@ CREATE TABLE public.residents (
   created_at timestamp with time zone DEFAULT now(),
   facility_id uuid NOT NULL,
   bank_details jsonb,
-  allowed_services jsonb NOT NULL DEFAULT '{"cable": false, "footcare": false, "haircare": false, "pharmacy": false, "wheelchairRepair": false}'::jsonb,
+  allowed_services jsonb NOT NULL DEFAULT '{"cable": false, "footcare": false, "haircare": false, "pharmacy": false, "wheelchairRepair": false, "miscellaneous": false}'::jsonb,
   service_authorizations jsonb,
   CONSTRAINT residents_pkey PRIMARY KEY (id),
   CONSTRAINT residents_linked_user_id_fkey FOREIGN KEY (linked_user_id) REFERENCES public.users(id),

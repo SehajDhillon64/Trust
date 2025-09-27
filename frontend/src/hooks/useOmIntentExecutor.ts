@@ -53,12 +53,13 @@ export function useOmIntentExecutor() {
     return fuzzy || null;
   }
 
-  function parseServiceType(text: string): 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | null {
+  function parseServiceType(text: string): 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous' | null {
     const t = normalize(text);
     if (/(hair\s*care|haircare)/.test(t)) return 'haircare';
     if (/(foot\s*care|footcare)/.test(t)) return 'footcare';
     if (/pharmacy/.test(t)) return 'pharmacy';
     if (/(cable|tv)/.test(t)) return 'cable';
+    if (/(misc|miscellaneous|other|general)/.test(t)) return 'miscellaneous';
     if (/(wheelchair\s*repair|wheelchairrepair)/.test(t)) return 'wheelchairRepair';
     return null;
   }
@@ -106,7 +107,7 @@ export function useOmIntentExecutor() {
     // All transactions in 'service type' batch (latest batch by that type)
     if (/all\s+transactions\s+in\s+.+\s+batch/.test(q) || (/transactions/.test(q) && /batch/.test(q))) {
       const st = parseServiceType(q);
-      if (!st) return 'Please specify a service type (haircare, footcare, pharmacy, cable, wheelchair repair).';
+      if (!st) return 'Please specify a service type (haircare, footcare, pharmacy, cable, miscellaneous, wheelchair repair).';
       const batches = getFacilityServiceBatches(facilityId, st);
       if (!batches || batches.length === 0) return `No ${st} batches found.`;
       const latest = batches.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];

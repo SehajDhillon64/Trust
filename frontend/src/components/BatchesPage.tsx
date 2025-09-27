@@ -15,7 +15,7 @@ interface BatchItem {
 }
 
 export default function BatchesPage({ onBack }: BatchesPageProps) {
-  const [selectedService, setSelectedService] = useState<'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair'>('haircare');
+  const [selectedService, setSelectedService] = useState<'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous'>('haircare');
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [batchResults, setBatchResults] = useState<any[]>([]);
@@ -30,7 +30,8 @@ export default function BatchesPage({ onBack }: BatchesPageProps) {
     footcare: 'Foot Care',
     pharmacy: 'Pharmacy',
     cable: 'Cable TV',
-    wheelchairRepair: 'Wheelchair Repair'
+    wheelchairRepair: 'Wheelchair Repair',
+    miscellaneous: 'Miscellaneous'
   };
 
   const eligibleResidents = residents.filter(r => 

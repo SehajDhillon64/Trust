@@ -351,6 +351,7 @@ export default function OMInvoicesPage() {
                 <option value="footcare">Foot Care</option>
                 <option value="pharmacy">Pharmacy</option>
                 <option value="cable">Cable TV</option>
+                <option value="miscellaneous">Miscellaneous</option>
                 <option value="wheelchairRepair">Wheelchair Repair</option>
               </select>
             </div>

@@ -39,7 +39,7 @@ function BotAvatar() {
 
 export default function ChatbotWidget() {
   const config = useMemo(() => ({
-    initialMessages: [createChatBotMessage('Hi! Ask me about balances, transactions, batches, cash box. Examples: balance in "John Doe" account; recent 5 transactions in "Jane Smith" account; all transactions in haircare batch; online transactions this month; cash box transactions')],
+    initialMessages: [createChatBotMessage('Hi! Ask me about balances, transactions, batches, cash box. Examples: balance in "John Doe" account; recent 5 transactions in "Jane Smith" account; all transactions in haircare or miscellaneous batch; online transactions this month; cash box transactions')],
     botName: 'OM Assistant',
     customComponents: {
       botAvatar: (props: any) => <BotAvatar />,

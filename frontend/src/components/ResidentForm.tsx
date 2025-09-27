@@ -31,7 +31,8 @@ export default function ResidentForm({ onClose }: ResidentFormProps) {
       footcare: true,
       pharmacy: true,
       cable: true,
-      wheelchairRepair: true
+      wheelchairRepair: true,
+      miscellaneous: false
     }
   });
 const [formError, setFormError] = useState<string | null>(null);
@@ -339,7 +340,8 @@ const [formError, setFormError] = useState<string | null>(null);
                 { key: 'footcare', label: 'Foot Care' },
                 { key: 'pharmacy', label: 'Pharmacy' },
                 { key: 'cable', label: 'Cable TV' },
-                { key: 'wheelchairRepair', label: 'Wheelchair Repair' }
+                { key: 'wheelchairRepair', label: 'Wheelchair Repair' },
+                { key: 'miscellaneous', label: 'Miscellaneous' }
               ].map(service => (
                 <label key={service.key} className="flex items-center space-x-2">
                   <input

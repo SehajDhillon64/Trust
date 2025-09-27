@@ -158,7 +158,8 @@ async function createSampleResidents(facilityId, residentUsers) {
         footcare: true,
         pharmacy: true,
         cable: false,
-        wheelchairRepair: false
+        wheelchairRepair: false,
+        miscellaneous: false
       }
     },
     {
@@ -176,7 +177,8 @@ async function createSampleResidents(facilityId, residentUsers) {
         footcare: true,
         pharmacy: true,
         cable: true,
-        wheelchairRepair: true
+        wheelchairRepair: true,
+        miscellaneous: true
       }
     },
     {
@@ -194,7 +196,8 @@ async function createSampleResidents(facilityId, residentUsers) {
         footcare: true,
         pharmacy: true,
         cable: true,
-        wheelchairRepair: false
+        wheelchairRepair: false,
+        miscellaneous: true
       }
     }
   ]

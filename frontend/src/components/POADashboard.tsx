@@ -197,7 +197,7 @@ export default function POADashboard() {
                     {Object.entries(linkedResident.serviceAuthorizations || linkedResident.allowedServices).map(([service, authorized]) => 
                       authorized && (
                         <span key={service} className="inline-flex px-1 py-0.5 text-xs bg-green-100 text-green-800 rounded">
-                          {service === 'wheelchairRepair' ? 'Wheelchair' : service.charAt(0).toUpperCase() + service.slice(1)}
+                          {service === 'wheelchairRepair' ? 'Wheelchair' : service === 'miscellaneous' ? 'Miscellaneous' : service.charAt(0).toUpperCase() + service.slice(1)}
                         </span>
                       )
                     )}
@@ -492,7 +492,8 @@ export default function POADashboard() {
                 { key: 'footcare', label: 'Foot Care Services' },
                 { key: 'pharmacy', label: 'Pharmacy Purchases' },
                 { key: 'cable', label: 'Cable TV Services' },
-                { key: 'wheelchairRepair', label: 'Wheelchair Repair' }
+                { key: 'wheelchairRepair', label: 'Wheelchair Repair' },
+                { key: 'miscellaneous', label: 'Miscellaneous' }
               ].map(service => {
                 const isAllowedByFacility = linkedResident?.allowedServices[service.key as keyof typeof linkedResident.allowedServices];
                 const isAuthorized = linkedResident?.serviceAuthorizations?.[service.key as keyof typeof linkedResident.serviceAuthorizations] ?? isAllowedByFacility ?? false;
