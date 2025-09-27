@@ -73,6 +73,7 @@ export interface Resident {
     pharmacy: boolean;
     cable: boolean;
     wheelchairRepair: boolean;
+    miscellaneous: boolean;
   };
   serviceAuthorizations?: {
     haircare: boolean;
@@ -80,6 +81,7 @@ export interface Resident {
     pharmacy: boolean;
     cable: boolean;
     wheelchairRepair: boolean;
+    miscellaneous: boolean;
   };
 }
 
@@ -106,7 +108,7 @@ export interface AuthState {
 export interface ServiceBatch {
   id: string;
   facilityId: string;
-  serviceType: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair';
+  serviceType: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous';
   status: 'open' | 'posted';
   createdAt: string;
   postedAt?: string;

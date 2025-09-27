@@ -198,6 +198,7 @@ export default function TransactionForm({ residentId, initialType = 'credit', on
               {resident?.allowedServices.footcare && <option value="Foot Care Service">Foot Care Service</option>}
               {resident?.allowedServices.pharmacy && <option value="Pharmacy Purchase">Pharmacy Purchase</option>}
               {resident?.allowedServices.cable && <option value="Cable TV Payment">Cable TV Payment</option>}
+              {resident?.allowedServices.miscellaneous && <option value="Miscellaneous Service">Miscellaneous Service</option>}
               {resident?.allowedServices.wheelchairRepair && <option value="Wheelchair Repair">Wheelchair Repair</option>}
               <option value="Personal Care Items">Personal Care Items</option>
               <option value="Clothing">Clothing</option>

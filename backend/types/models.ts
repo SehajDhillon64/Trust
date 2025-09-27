@@ -62,7 +62,7 @@ export interface ServiceBatchItem {
 export interface ServiceBatch {
   id: string;
   facilityId: string;
-  serviceType: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair';
+  serviceType: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous';
   status: 'open' | 'posted';
   createdAt: string;
   postedAt?: string;

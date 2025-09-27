@@ -144,7 +144,8 @@ export default function OMDashboard() {
     footcare: 'Foot Care',
     pharmacy: 'Pharmacy',
     cable: 'Cable TV',
-    wheelchairRepair: 'Wheelchair Repair'
+    wheelchairRepair: 'Wheelchair Repair',
+    miscellaneous: 'Miscellaneous'
   };
 
   const postedServiceBatchesThisMonth = currentFacility
@@ -510,7 +511,7 @@ export default function OMDashboard() {
       ['Posted Date', 'Service', 'Residents', 'Total Amount'],
       serviceBatchesPosted.map(b => [
         b.postedAt ? new Date(b.postedAt).toLocaleDateString() : '',
-        b.serviceType,
+        serviceTypeLabels[b.serviceType] || b.serviceType,
         String(b.items.length),
         `$${b.totalAmount.toFixed(2)}`,
       ]),

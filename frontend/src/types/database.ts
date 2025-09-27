@@ -155,6 +155,7 @@ export interface Database {
             pharmacy: boolean
             cable: boolean
             wheelchairRepair: boolean
+            miscellaneous: boolean
           }
           service_authorizations: {
             haircare: boolean
@@ -162,6 +163,7 @@ export interface Database {
             pharmacy: boolean
             cable: boolean
             wheelchairRepair: boolean
+            miscellaneous: boolean
           } | null
         }
         Insert: {
@@ -190,6 +192,7 @@ export interface Database {
             pharmacy: boolean
             cable: boolean
             wheelchairRepair: boolean
+            miscellaneous: boolean
           }
           service_authorizations?: {
             haircare: boolean
@@ -197,6 +200,7 @@ export interface Database {
             pharmacy: boolean
             cable: boolean
             wheelchairRepair: boolean
+            miscellaneous: boolean
           } | null
         }
         Update: {
@@ -225,6 +229,7 @@ export interface Database {
             pharmacy: boolean
             cable: boolean
             wheelchairRepair: boolean
+            miscellaneous: boolean
           }
           service_authorizations?: {
             haircare: boolean
@@ -232,6 +237,7 @@ export interface Database {
             pharmacy: boolean
             cable: boolean
             wheelchairRepair: boolean
+            miscellaneous: boolean
           } | null
         }
       }
@@ -363,7 +369,7 @@ export interface Database {
         Row: {
           id: string
           facility_id: string
-          service_type: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair'
+          service_type: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous'
           status: 'open' | 'posted'
           created_at: string
           posted_at: string | null
@@ -375,7 +381,7 @@ export interface Database {
         Insert: {
           id?: string
           facility_id: string
-          service_type: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair'
+          service_type: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous'
           status?: 'open' | 'posted'
           created_at?: string
           posted_at?: string | null
@@ -387,7 +393,7 @@ export interface Database {
         Update: {
           id?: string
           facility_id?: string
-          service_type?: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair'
+          service_type?: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous'
           status?: 'open' | 'posted'
           created_at?: string
           posted_at?: string | null
@@ -770,7 +776,7 @@ export interface Database {
       resident_status: 'active' | 'inactive'
       transaction_type: 'credit' | 'debit'
       transaction_method: 'manual' | 'cash' | 'cheque'
-      service_type: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair'
+      service_type: 'haircare' | 'footcare' | 'pharmacy' | 'cable' | 'wheelchairRepair' | 'miscellaneous'
       batch_status: 'open' | 'posted'
       batch_item_status: 'pending' | 'processed' | 'failed'
       invitation_status: 'pending' | 'accepted' | 'expired'

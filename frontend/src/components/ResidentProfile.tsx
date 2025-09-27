@@ -79,7 +79,8 @@ export default function ResidentProfile({ resident, onClose }: ResidentProfilePr
     { key: 'footcare', label: 'Foot Care' },
     { key: 'pharmacy', label: 'Pharmacy' },
     { key: 'cable', label: 'Cable TV' },
-    { key: 'wheelchairRepair', label: 'Wheelchair Repair' }
+    { key: 'wheelchairRepair', label: 'Wheelchair Repair' },
+    { key: 'miscellaneous', label: 'Miscellaneous' }
   ];
 
   const isManuallyManaged = !resident.linkedUserId;

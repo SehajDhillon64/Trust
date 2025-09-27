@@ -1529,7 +1529,8 @@ function getServiceTypeLabel(serviceType: ServiceBatch['serviceType']) {
     footcare: 'Foot Care',
     pharmacy: 'Pharmacy',
     cable: 'Cable TV',
-    wheelchairRepair: 'Wheelchair Repair'
+    wheelchairRepair: 'Wheelchair Repair',
+    miscellaneous: 'Miscellaneous'
   }
   return labels[serviceType]
 }
