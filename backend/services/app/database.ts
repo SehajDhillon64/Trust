@@ -697,7 +697,7 @@ export async function createResidentWithLinkedUser(params: {
 
     const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
     const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
-    const redirectTo = `${baseUrl}/reset-password/resident`;
+    const redirectTo = `${baseUrl}/reset-password/resident/`;
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
     if (resetError) {
       throw resetError;
@@ -760,7 +760,7 @@ export async function createResidentWithLinkedUser(params: {
 
     const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
     const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
-    const redirectTo = `${baseUrl}/reset-password/resident`;
+    const redirectTo = `${baseUrl}/reset-password/resident/`;
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
     if (resetError) {
       throw resetError;
@@ -863,7 +863,7 @@ export async function clearFacilityForUser(userId: string): Promise<void> {
 export async function sendRoleBasedResetPasswordEmail(params: { email: string; role: 'OM' | 'POA' | 'Resident' | 'Vendor'; siteUrl?: string }) {
   const email = params.email.trim().toLowerCase();
   const roleNorm = params.role;
-  const envSite = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
+  const envSite = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app';
   const baseUrl = (params.siteUrl || envSite).replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
   const redirectPath = roleNorm === 'OM'
     ? '/reset-password/om'
@@ -2147,7 +2147,7 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
         facilityId: invitation.facilityId,
         residentId: invitation.residentId,
         name: undefined,
-        redirectTo: `https://vaultiq.ca`
+        redirectTo: `https://trust1.netlify.app/reset-password/resident/`
       }),
     });
 
@@ -2796,7 +2796,7 @@ export async function provisionUser(params: { email: string; name?: string; role
 
   if (role === 'POA' || role === 'Resident') {
     const { error: inviteErr } = await (getSupabaseAdmin() as any).auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://vaultiq.ca',
+      redirectTo: 'https://trust1.netlify.app/reset-password/resident/',
       data: userMetadata,
     });
     if (inviteErr) {

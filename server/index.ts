@@ -38,7 +38,7 @@ if (!serviceRoleKey) {
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 const supabaseAnon = anonKey ? createClient(supabaseUrl, anonKey) : null as any;
 
-const siteUrl = (process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'http://localhost:5173').replace(/\/$/, '');
+const siteUrl = (process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app').replace(/\/$/, '');
 
 // Helper to build a PayPal client per facility
 function createPayPalClient(config: { clientId: string; clientSecret: string; environment?: 'sandbox' | 'live' }) {
@@ -123,7 +123,7 @@ app.post('/api/auth/invite', async (req, res) => {
 
     const finalRedirect = (typeof redirectTo === 'string' && redirectTo)
       ? redirectTo
-      : `${siteUrl}/reset-password/resident`;
+      : `${siteUrl}/reset-password/resident/`;
 
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: finalRedirect,
@@ -325,7 +325,7 @@ app.post('/api/users/provision', async (req, res) => {
     // Step 4: Send email for POA/Resident only
     if (role === 'POA' || role === 'Resident') {
       const { error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${siteUrl}/reset-password/resident`,
+        redirectTo: `${siteUrl}/reset-password/resident/`,
         data: userMetadata,
       });
       if (inviteErr) {
