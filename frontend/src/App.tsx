@@ -124,6 +124,7 @@ function AppContent() {
       <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <AuthPage />} />
       <Route path="/reset-password/om" element={<ResetPasswordOM />} />
       <Route path="/reset-password/resident" element={<ResetPasswordResident />} />
+      <Route path="/reset-password/resident/" element={<ResetPasswordResident />} />
       <Route path="/reset-password/vendor" element={<ResetPasswordVendor />} />
 
       <Route
