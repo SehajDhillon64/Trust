@@ -699,7 +699,8 @@ export async function createResidentWithLinkedUser(params: {
       throw linkError;
     }
 
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
+    const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
     const redirectTo = `${baseUrl}/reset-password/resident`;
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
     if (resetError) {
@@ -761,7 +762,8 @@ export async function createResidentWithLinkedUser(params: {
       throw linkError;
     }
 
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
+    const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
     const redirectTo = `${baseUrl}/reset-password/resident`;
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
     if (resetError) {
@@ -865,7 +867,8 @@ export async function clearFacilityForUser(userId: string): Promise<void> {
 export async function sendRoleBasedResetPasswordEmail(params: { email: string; role: 'OM' | 'POA' | 'Resident' | 'Vendor'; siteUrl?: string }) {
   const email = params.email.trim().toLowerCase();
   const roleNorm = params.role;
-  const baseUrl = params.siteUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+  const envSite = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || '';
+  const baseUrl = (params.siteUrl || envSite).replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
   const redirectPath = roleNorm === 'OM'
     ? '/reset-password/om'
     : roleNorm === 'Vendor'
