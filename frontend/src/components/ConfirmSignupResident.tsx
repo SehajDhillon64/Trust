@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../config/supabase';
 
 export default function ConfirmSignupResident() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -66,8 +67,30 @@ export default function ConfirmSignupResident() {
       }
     };
 
-    // Initial load
-    loadLinkedResident();
+    const exchangeSessionForCookies = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const accessToken = data.session?.access_token || null;
+        const refreshToken = data.session?.refresh_token || null;
+        if (accessToken) {
+          await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/exchange`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            credentials: 'include',
+            body: JSON.stringify({ accessToken, refreshToken }),
+          }).catch(() => {});
+        }
+      } catch (_) {
+      }
+    };
+
+    (async () => {
+      await exchangeSessionForCookies();
+      if (isMounted) await loadLinkedResident();
+    })();
 
     return () => {
       isMounted = false;
