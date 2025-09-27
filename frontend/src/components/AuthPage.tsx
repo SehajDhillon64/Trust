@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, Mail, Lock, Eye, EyeOff, UserCircle, Calendar, Building2 } from 'lucide-react';
+import { Shield, Mail, Lock, Eye, EyeOff, UserCircle, Calendar, Building2, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContextSupabase';
 import { Facility } from '../types';
@@ -11,6 +11,8 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [forgotRole, setForgotRole] = useState<'OM' | 'POA' | 'Resident' | 'Vendor'>('POA');
+  const [showTerms, setShowTerms] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -80,6 +82,10 @@ export default function AuthPage() {
             setError('Please select a facility.');
             return;
           }
+          if (!acceptedTerms) {
+            setError('You must agree to the service conditions to continue.');
+            return;
+          }
         }
         if (formData.password !== formData.confirmPassword) {
           setError('Passwords do not match.');
@@ -99,7 +105,9 @@ export default function AuthPage() {
           role: formData.role,
           facilityId: formData.facilityId || currentFacility?.id || '',
           residentName: formData.residentName || undefined,
-          residentDob: formData.residentDob || undefined
+          residentDob: formData.residentDob || undefined,
+          termsAcceptedAt: acceptedTerms ? new Date().toISOString() : undefined,
+          termsVersion: acceptedTerms ? 'v1' : undefined
         });
         
         
@@ -117,6 +125,7 @@ export default function AuthPage() {
             residentDob: '',
             facilityId: ''
           });
+          setAcceptedTerms(false);
           setSuccess('Account created successfully! You can now log in.');
           setIsLogin(true); // Switch to login mode
           return;
@@ -364,6 +373,66 @@ export default function AuthPage() {
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {!showForgot && !isSetup && !isLogin && (
+            <div className="flex items-start space-x-2">
+              <input
+                id="accept-terms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1"
+                required
+              />
+              <label htmlFor="accept-terms" className="text-sm text-gray-700">
+                I agree to the
+                <button type="button" onClick={() => setShowTerms(true)} className="ml-1 text-blue-600 hover:text-blue-700 underline">
+                  service conditions
+                </button>
+                .
+              </label>
+            </div>
+          )}
+
+          {showTerms && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setShowTerms(false)} />
+              <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-6">
+                <button
+                  type="button"
+                  onClick={() => setShowTerms(false)}
+                  className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Service Conditions</h2>
+                <div className="prose max-w-none h-72 overflow-y-auto text-sm text-gray-700 border rounded-md p-4">
+                  <p>
+                    By creating an account as a POA or Resident, you agree to our Terms of
+                    Service and Privacy Policy. You consent to electronic communications and
+                    acknowledge that your use of this system is for authorized purposes only.
+                    You are responsible for maintaining the confidentiality of your credentials.
+                  </p>
+                  <p className="mt-3">
+                    Data may be processed according to applicable regulations. For full details,
+                    please review the official policy documents provided by your facility or
+                    organization administrator.
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center justify-end space-x-3">
+                  <button type="button" onClick={() => setShowTerms(false)} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">Close</button>
+                  <button
+                    type="button"
+                    onClick={() => { setAcceptedTerms(true); setShowTerms(false); }}
+                    className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    I Agree
+                  </button>
+                </div>
               </div>
             </div>
           )}

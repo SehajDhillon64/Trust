@@ -7,7 +7,7 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   setupAccount: (token: string, password: string) => Promise<boolean>;
-  signup: (userData: { email: string; password: string; name: string; role: 'OM' | 'POA' | 'Resident'; facilityId: string; residentName?: string; residentDob?: string; residentId?: string }) => Promise<boolean>;
+  signup: (userData: { email: string; password: string; name: string; role: 'OM' | 'POA' | 'Resident'; facilityId: string; residentName?: string; residentDob?: string; residentId?: string; termsAcceptedAt?: string; termsVersion?: string }) => Promise<boolean>;
   setCurrentFacility: (facility: Facility | null) => void;
 }
 
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (userData: { email: string; password: string; name: string; role: 'OM' | 'POA' | 'Resident'; facilityId: string; residentName?: string; residentDob?: string; residentId?: string }): Promise<boolean> => {
+  const signup = async (userData: { email: string; password: string; name: string; role: 'OM' | 'POA' | 'Resident'; facilityId: string; residentName?: string; residentDob?: string; residentId?: string; termsAcceptedAt?: string; termsVersion?: string }): Promise<boolean> => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     // Add timeout to prevent infinite loading
@@ -164,7 +164,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: userData.name,
           role: userData.role,
           facilityId: userData.facilityId,
-          residentId: targetResidentId
+          residentId: targetResidentId,
+          // Allow POA/Resident to set their password and record terms acceptance
+          password: userData.password,
+          termsAcceptedAt: userData.termsAcceptedAt,
+          termsVersion: userData.termsVersion
         })
       });
       if (!resp.ok) {

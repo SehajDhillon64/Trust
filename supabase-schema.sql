@@ -191,6 +191,8 @@ CREATE TABLE public.users (
   created_at timestamp with time zone DEFAULT now(),
   auth_user_id uuid NOT NULL UNIQUE,
   company_id uuid,
+  terms_accepted_at timestamp with time zone,
+  terms_version text,
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facilities(id),
   CONSTRAINT users_auth_user_id_fkey FOREIGN KEY (auth_user_id) REFERENCES auth.users(id)

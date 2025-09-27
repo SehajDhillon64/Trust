@@ -190,7 +190,10 @@ app.post('/api/users/provision', async (req, res) => {
       facilityId,
       residentId,
       communityName,
-      companyId
+      companyId,
+      password,
+      termsAcceptedAt,
+      termsVersion
     } = req.body || {};
 
     
@@ -268,11 +271,13 @@ app.post('/api/users/provision', async (req, res) => {
         authUserId = authCreate.user?.id || null;
       }
     } else {
-      // POA/Resident: create with random password, then send invite to set their own
-      const randomPassword = Math.random().toString(36).slice(2) + Math.random().toString(36).toUpperCase().slice(2);
+      // POA/Resident: allow direct password set; fallback to random if not provided
+      const setPassword = typeof password === 'string' && password.length >= 6
+        ? password
+        : Math.random().toString(36).slice(2) + Math.random().toString(36).toUpperCase().slice(2);
       const { data: authCreate, error: authCreateErr } = await supabaseAdmin.auth.admin.createUser({
         email,
-        password: randomPassword,
+        password: setPassword,
         email_confirm: false,
         user_metadata: userMetadata
       });
@@ -298,6 +303,8 @@ app.post('/api/users/provision', async (req, res) => {
       facility_id: resolvedFacilityId,
       auth_user_id: authUserId,
       ...(companyId ? { company_id: companyId } : {}),
+      ...(termsAcceptedAt ? { terms_accepted_at: termsAcceptedAt } : {}),
+      ...(termsVersion ? { terms_version: termsVersion } : {}),
     };
 
     const { data: profileRow, error: profileErr } = await supabaseAdmin
@@ -321,18 +328,18 @@ app.post('/api/users/provision', async (req, res) => {
       }
     }
 
-    // Step 4: Send email for POA/Resident only
-    // Step 4: Send email for POA/Resident only
+    // Step 4: Only send email invite if password wasn't directly set (user must set it)
     if (role === 'POA' || role === 'Resident') {
-      const { error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${siteUrl}/reset-password/resident/`,
-        data: userMetadata,
-      });
-      if (inviteErr) {
-        // Tolerate duplicate/invite exists errors
-        const msg = (inviteErr as any)?.message?.toLowerCase?.() || '';
-        if (!msg.includes('already') && !msg.includes('exist') && !msg.includes('registered')) {
-          return res.status(400).json({ error: `Failed to send invite: ${inviteErr.message}` });
+      if (!(typeof password === 'string' && password.length >= 6)) {
+        const { error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          redirectTo: `${siteUrl}/reset-password/resident/`,
+          data: userMetadata,
+        });
+        if (inviteErr) {
+          const msg = (inviteErr as any)?.message?.toLowerCase?.() || '';
+          if (!msg.includes('already') && !msg.includes('exist') && !msg.includes('registered')) {
+            return res.status(400).json({ error: `Failed to send invite: ${inviteErr.message}` });
+          }
         }
       }
     }
