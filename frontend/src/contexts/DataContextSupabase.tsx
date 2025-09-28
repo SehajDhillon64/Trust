@@ -1436,10 +1436,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     resetCashBoxToMonthlyAmount: async (facilityId: string, userId: string) => {
       const result = await resetCashBoxMonthlyDb(facilityId, userId);
       if (result.success) {
-        // Update local state to default balance
+        // Reload from DB to avoid hard-coded values
+        const balance = await getCashBoxBalanceDb(facilityId);
         setCashBoxBalances(prev => ({
           ...prev,
-          [facilityId]: 2500.00
+          [facilityId]: balance
         }));
       } else {
         throw new Error(result.error || 'Failed to reset cash box');

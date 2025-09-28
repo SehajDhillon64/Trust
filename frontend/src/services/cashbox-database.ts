@@ -55,10 +55,8 @@ export async function getCashBoxBalance(facilityId: string): Promise<number> {
     if (error) {
       return 0;
     }
-    if (!data) {
-      // If no row exists yet, default to starting monthly amount
-      return 2500.0;
-    }
+    // If no row exists yet, return 0; initialization happens on community create or explicit reset
+    if (!data) return 0;
     return Number((data as any).balance || 0);
   } catch (e) {
     return 0;
