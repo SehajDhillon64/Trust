@@ -4,6 +4,7 @@ import { FRONTEND_URL, PORT } from '../config/env.js';
 import { createOrder, captureOrder } from '../services/payments.js';
 import { getItems } from '../services/db.js';
 import * as appDb from '../services/app/database.js';
+import * as appCashbox from '../services/app/cashbox-database.js';
 import * as appPaypal from '../services/app/paypal.js';
 
 const app = express();
@@ -124,7 +125,7 @@ const rpcAllowlist: Record<string, any> = {
   resetCashBoxToMonthly: appDb.resetCashBoxToMonthly,
   getMonthlyCashBoxHistory: appDb.getMonthlyCashBoxHistory,
   getCashBoxTransactionsByMonthYear: appDb.getCashBoxTransactionsByMonthYear,
-  getCashBoxBalanceServer: appDb.getCashBoxBalance,
+  getCashBoxBalanceServer: appCashbox.getCashBoxBalance,
   // paypal config
   fetchPayPalConfig: appPaypal.fetchPayPalConfig,
 };
