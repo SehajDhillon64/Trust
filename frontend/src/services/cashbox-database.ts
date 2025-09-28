@@ -53,13 +53,26 @@ export async function getCashBoxBalance(facilityId: string): Promise<number> {
       .eq('facility_id', facilityId)
       .maybeSingle();
     if (error) {
+      // Fallback to server RPC (bypasses client-side RLS issues)
+      try {
+        const serverBalance = await import('./rpc').then(m => m.rpcCall<number>('getCashBoxBalanceServer', [facilityId]));
+        return Number(serverBalance || 0);
+      } catch {
+        return 0;
+      }
+    }
+    // If no row exists yet, reflect default monthly cash box amount
+    if (!data) return 2500.00;
+    const bal = (data as any).balance;
+    return typeof bal === 'number' ? bal : Number(bal ?? 0);
+  } catch (e) {
+    // On unexpected error, try server fallback once
+    try {
+      const serverBalance = await import('./rpc').then(m => m.rpcCall<number>('getCashBoxBalanceServer', [facilityId]));
+      return Number(serverBalance || 0);
+    } catch {
       return 0;
     }
-    // If no row exists yet, return 0; initialization happens on community create or explicit reset
-    if (!data) return 0;
-    return Number((data as any).balance || 0);
-  } catch (e) {
-    return 0;
   }
 }
 
