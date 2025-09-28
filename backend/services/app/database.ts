@@ -2147,7 +2147,7 @@ export async function sendInvitationEmail(invitation: SignupInvitation, facility
         facilityId: invitation.facilityId,
         residentId: invitation.residentId,
         name: undefined,
-        redirectTo: `https://trust1.netlify.app/confirm-signup/resident/`
+        redirectTo: `${(process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app').replace(/\/$/, '')}/confirm-signup/resident/`
       }),
     });
 
@@ -2828,8 +2828,9 @@ export async function provisionUser(params: { email: string; name?: string; role
   }
 
   if (role === 'POA' || role === 'Resident') {
+    const siteBase = (process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app').replace(/\/$/, '');
     const { error: inviteErr } = await (getSupabaseAdmin() as any).auth.admin.inviteUserByEmail(email, {
-      redirectTo: 'https://trust1.netlify.app/confirm-signup/resident/',
+      redirectTo: `${siteBase}/confirm-signup/resident/`,
       data: userMetadata,
     });
     if (inviteErr) {
