@@ -289,11 +289,12 @@ Are you sure you want to continue?`;
         // Generate report
         await generateMonthlyReport();
         
-        // Update balance
-        setBalance(2500.00);
+        // Reload balance from DB to reflect true post-reset balance
+        const reloaded = await getCashBoxBalance(currentFacility.id);
+        setBalance(reloaded);
         
-        // Clear current month transactions
-        alert('Cash box has been reset to $2500.00. Monthly report has been generated.');
+        // Notify
+        alert('Cash box has been reset. Monthly report has been generated.');
       } else {
         alert(result.error || 'Failed to reset cash box');
       }
