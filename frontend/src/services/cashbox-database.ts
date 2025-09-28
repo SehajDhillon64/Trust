@@ -44,35 +44,13 @@ export async function initializeCashBoxBalance(
   }
 }
 
-// Get current cash box balance for a facility
+// Get current cash box balance for a facility (server-backed)
 export async function getCashBoxBalance(facilityId: string): Promise<number> {
   try {
-    const { data, error } = await supabase
-      .from('cash_box_balances')
-      .select('balance')
-      .eq('facility_id', facilityId)
-      .maybeSingle();
-    if (error) {
-      // Fallback to server RPC (bypasses client-side RLS issues)
-      try {
-        const serverBalance = await import('./rpc').then(m => m.rpcCall<number>('getCashBoxBalanceServer', [facilityId]));
-        return Number(serverBalance || 0);
-      } catch {
-        return 0;
-      }
-    }
-    // If no row exists yet, reflect default monthly cash box amount
-    if (!data) return 2500.00;
-    const bal = (data as any).balance;
-    return typeof bal === 'number' ? bal : Number(bal ?? 0);
-  } catch (e) {
-    // On unexpected error, try server fallback once
-    try {
-      const serverBalance = await import('./rpc').then(m => m.rpcCall<number>('getCashBoxBalanceServer', [facilityId]));
-      return Number(serverBalance || 0);
-    } catch {
-      return 0;
-    }
+    const serverBalance = await rpcCall<number>('getCashBoxBalanceServer', [facilityId]);
+    return Number(serverBalance || 0);
+  } catch {
+    return 0;
   }
 }
 
