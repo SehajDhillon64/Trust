@@ -2568,6 +2568,22 @@ export async function closeMonthlyPreAuthList(listId: string, closedBy: string):
 }
 
 // Cash Box Functions
+export async function getCashBoxBalance(facilityId: string): Promise<number> {
+  try {
+    const { data, error } = await supabase
+      .from('cash_box_balances')
+      .select('balance')
+      .eq('facility_id', facilityId)
+      .maybeSingle();
+    if (error) {
+      return 0;
+    }
+    const bal = (data as any)?.balance;
+    return typeof bal === 'number' ? bal : Number(bal ?? 0);
+  } catch (_) {
+    return 0;
+  }
+}
 
 
 export async function updateCashBoxBalanceWithTransaction(
