@@ -27,13 +27,49 @@ export interface CashBoxBalance {
   created_at: string;
 }
 
-// Initialize cash box balance if it doesn't exist
+// Initialize cash box balance if it doesn't exist (idempotent, no reset)
 export async function initializeCashBoxBalance(
   facilityId: string,
   userId: string
 ): Promise<{ success: boolean; balance?: number; initialized?: boolean; error?: string }> {
-  // For now call resetCashBoxToMonthly which initializes if missing
-  return rpcCall('resetCashBoxToMonthly', [facilityId, userId])
+  try {
+    // Check if a balance row already exists for this facility
+    const { data: existing, error: selectError } = await supabase
+      .from('cash_box_balances')
+      .select('id, balance')
+      .eq('facility_id', facilityId)
+      .maybeSingle();
+
+    if (selectError && selectError.code !== 'PGRST116') {
+      // PGRST116 is no rows match for maybeSingle; ignore that
+      return { success: false, error: selectError.message };
+    }
+
+    if (existing) {
+      return { success: true, balance: Number((existing as any).balance ?? 0), initialized: false };
+    }
+
+    // Create an initial row with default balance (DB default 2500.00)
+    const { error: insertError } = await supabase
+      .from('cash_box_balances')
+      .insert({ facility_id: facilityId, updated_by: userId })
+      .single();
+
+    if (insertError) {
+      // If another client created it concurrently, treat as success
+      if ((insertError as any).code === '23505') {
+        const afterRace = await getCashBoxBalance(facilityId);
+        return { success: true, balance: afterRace, initialized: false };
+      }
+      return { success: false, error: insertError.message };
+    }
+
+    // Return current balance (should be default 2500)
+    const current = await getCashBoxBalance(facilityId);
+    return { success: true, balance: current, initialized: true };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Failed to initialize cash box balance' };
+  }
 }
 
 // Get current cash box balance for a facility
