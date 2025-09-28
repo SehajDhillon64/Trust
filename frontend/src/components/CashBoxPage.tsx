@@ -454,7 +454,7 @@ End of Report
               <h2 className="text-lg font-semibold text-gray-900">Current Balance</h2>
               
               <p className="text-3xl font-bold text-green-600">
-                ${Number(balance ?? 0).toFixed(2)}
+                ${Number(currentBalance ?? 0).toFixed(2)}
               </p>
               
             </div>
