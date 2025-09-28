@@ -32,8 +32,16 @@ export async function initializeCashBoxBalance(
   facilityId: string,
   userId: string
 ): Promise<{ success: boolean; balance?: number; initialized?: boolean; error?: string }> {
-  // For now call resetCashBoxToMonthly which initializes if missing
-  return rpcCall('resetCashBoxToMonthly', [facilityId, userId])
+  try {
+    const { data, error } = await supabase.rpc('initialize_cash_box_balance', {
+      p_facility_id: facilityId,
+      p_user_id: userId
+    });
+    if (error) throw error;
+    return data as any;
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Unknown error' };
+  }
 }
 
 // Get current cash box balance for a facility
