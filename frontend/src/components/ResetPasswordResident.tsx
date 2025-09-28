@@ -13,9 +13,60 @@ export default function ResetPasswordResident() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const API_BASE = (import.meta as any)?.env?.VITE_BACKEND_URL || 'https://trust-3.onrender.com';
 
   useEffect(() => {
     let isMounted = true;
+    const processAuthFromUrl = async () => {
+      try {
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        if (hash === '#') {
+          if (typeof window !== 'undefined') {
+            window.history.replaceState({}, '', window.location.pathname + window.location.search);
+          }
+          return;
+        }
+        if (hash && hash.length > 1) {
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          const code = params.get('code');
+
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+            if (typeof window !== 'undefined') {
+              window.history.replaceState({}, '', window.location.pathname + window.location.search);
+            }
+          } else if (code) {
+            try {
+              await supabase.auth.exchangeCodeForSession(code);
+            } catch (_) {}
+            if (typeof window !== 'undefined') {
+              window.history.replaceState({}, '', window.location.pathname + window.location.search);
+            }
+          }
+        }
+      } catch (_) {}
+    };
+
+    const exchangeSessionForCookies = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const accessToken = data.session?.access_token || null;
+        const refreshToken = data.session?.refresh_token || null;
+        if (accessToken) {
+          await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/exchange`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            credentials: 'include',
+            body: JSON.stringify({ accessToken, refreshToken }),
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    };
     const loadLinkedResident = async () => {
       setLookupLoading(true);
       setError('');
@@ -55,7 +106,11 @@ export default function ResetPasswordResident() {
         if (isMounted) setLookupLoading(false);
       }
     };
-    loadLinkedResident();
+    (async () => {
+      await processAuthFromUrl();
+      await exchangeSessionForCookies();
+      await loadLinkedResident();
+    })();
     return () => {
       isMounted = false;
     };
