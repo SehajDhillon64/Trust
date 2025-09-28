@@ -31,6 +31,38 @@ export default function ConfirmSignupResident() {
   useEffect(() => {
     let isMounted = true;
 
+    const processAuthFromUrl = async () => {
+      try {
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        if (hash === '#') {
+          if (typeof window !== 'undefined') {
+            window.history.replaceState({}, '', window.location.pathname + window.location.search);
+          }
+          return;
+        }
+        if (hash && hash.length > 1) {
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          const code = params.get('code');
+
+          if (accessToken && refreshToken) {
+            await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+            if (typeof window !== 'undefined') {
+              window.history.replaceState({}, '', window.location.pathname + window.location.search);
+            }
+          } else if (code) {
+            try {
+              await supabase.auth.exchangeCodeForSession(code);
+            } catch (_) {}
+            if (typeof window !== 'undefined') {
+              window.history.replaceState({}, '', window.location.pathname + window.location.search);
+            }
+          }
+        }
+      } catch (_) {}
+    };
+
     const loadLinkedResident = async () => {
       setLookupLoading(true);
       setError('');
@@ -88,6 +120,7 @@ export default function ConfirmSignupResident() {
     };
 
     (async () => {
+      await processAuthFromUrl();
       await exchangeSessionForCookies();
       if (isMounted) await loadLinkedResident();
     })();
