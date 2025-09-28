@@ -760,7 +760,7 @@ export async function createResidentWithLinkedUser(params: {
 
     const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app';
     const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
-    const redirectTo = `${baseUrl}/reset-password/resident/`;
+    const redirectTo = `${baseUrl}/confirm-signup/resident/`;
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
     if (resetError) {
       throw resetError;
