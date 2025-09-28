@@ -123,6 +123,7 @@ const rpcAllowlist: Record<string, any> = {
   updateCashBoxBalanceWithTransaction: appDb.updateCashBoxBalanceWithTransaction,
   resetCashBoxToMonthly: appDb.resetCashBoxToMonthly,
   getMonthlyCashBoxHistory: appDb.getMonthlyCashBoxHistory,
+  getCashBoxTransactionsByMonthYear: appDb.getCashBoxTransactionsByMonthYear,
   // paypal config
   fetchPayPalConfig: appPaypal.fetchPayPalConfig,
 };
