@@ -283,25 +283,7 @@ export default function ConfirmSignupResident() {
           </form>
         )}
 
-        {step === 2 && (
-          <div className="space-y-4 mb-6">
-            <div className="grid grid-cols-2 gap-3">
-              {Object.keys(initialServices).map((key) => (
-                <label key={key} className="inline-flex items-center space-x-2 text-black">
-                  <input
-                    type="checkbox"
-                    checked={!!selectedServices[key]}
-                    onChange={(e) => setSelectedServices({ ...selectedServices, [key]: e.target.checked })}
-                  />
-                  <span className="capitalize">{key}</span>
-                </label>
-              ))}
-            </div>
-            <button type="button" onClick={saveSelectedServices} disabled={updating || !resident} className="w-full bg-blue-600 text-white rounded py-2">
-              {updating ? 'Saving…' : 'Continue'}
-            </button>
-          </div>
-        )}
+        
 
         {step === 3 && (
           <form onSubmit={handleSubmit} className="space-y-4">
