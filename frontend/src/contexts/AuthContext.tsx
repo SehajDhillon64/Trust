@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, Facility } from '../types';
-import { signInUser, signOutUser, getCurrentUser, getResidentsByFacility } from '../services/database';
+import { signInUser, signOutUser, getCurrentUser } from '../services/database';
 import { supabase } from '../config/supabase';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  setupAccount: (token: string, password: string) => Promise<boolean>;
-  signup: (userData: { email: string; password: string; name: string; role: 'OM' | 'POA' | 'Resident'; facilityId: string; residentName?: string; residentDob?: string; residentId?: string; termsAcceptedAt?: string; termsVersion?: string }) => Promise<boolean>;
   setCurrentFacility: (facility: Facility | null) => void;
 }
 
@@ -106,101 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setupAccount = async (token: string, password: string): Promise<boolean> => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
-    
-    try {
-      // TODO: Implement token-based account setup with Supabase
-      // For now, we'll use mock data until the invitation system is implemented
-      const user = mockUsers[1]; // Mock POA user
-      const facility = mockFacilities.find(f => f.id === user.facilityId);
-      setAuthState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        currentFacility: facility || null
-      });
-      return true;
-    } catch (error) {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-      return false;
-    }
-  };
-
-  const signup = async (userData: { email: string; password: string; name: string; role: 'OM' | 'POA' | 'Resident'; facilityId: string; residentName?: string; residentDob?: string; residentId?: string; termsAcceptedAt?: string; termsVersion?: string }): Promise<boolean> => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
-    
-    // Add timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-    }, 30000);
-    
-    try {
-      // Resolve resident ID before provisioning (optional for POA/Resident)
-      let targetResidentId: string | undefined = userData.residentId;
-      if ((userData.role === 'POA' || userData.role === 'Resident') && !targetResidentId) {
-        if (userData.facilityId && userData.residentName && userData.residentDob) {
-          const facilityResidents = await getResidentsByFacility(userData.facilityId);
-          const nameNorm = (userData.residentName || '').trim().toLowerCase();
-          const dobNorm = (userData.residentDob || '').slice(0, 10);
-          const matches = facilityResidents.filter(r => r.name.trim().toLowerCase() === nameNorm && String(r.dob).slice(0,10) === dobNorm);
-          if (matches.length === 1) {
-            targetResidentId = matches[0].id;
-          } else if (matches.length > 1) {
-            throw new Error('Multiple residents matched. Please contact support');
-          } else {
-            throw new Error('Resident not found for provided name/DOB/facility');
-          }
-        }
-      }
-
-      // Provision via server to bypass RLS and handle linking server-side
-      const apiBase = (((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com').replace(/\/+$/, '')
-      const resp = await fetch(`${apiBase}/api/users/provision`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: userData.email,
-          name: userData.name,
-          role: userData.role,
-          facilityId: userData.facilityId,
-          residentId: targetResidentId,
-          // Allow POA/Resident to set their password and record terms acceptance
-          password: userData.password,
-          termsAcceptedAt: userData.termsAcceptedAt,
-          termsVersion: userData.termsVersion
-        })
-      });
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => ({}));
-        throw new Error(body?.error || `Provision failed with status ${resp.status}`);
-      }
-      const provisionResult = await resp.json();
-
-      // Clear timeout since operation completed
-      clearTimeout(timeoutId);
-      
-      // Auto-login won't happen immediately due to email confirmation
-      // For now, set loading to false and let user know to check email
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-      return true;
-    } catch (error) {
-      
-      // Clear timeout since operation completed (with error)
-      clearTimeout(timeoutId);
-      
-      // Ensure loading state is always reset
-      setAuthState(prev => ({ ...prev, isLoading: false }));
-      
-      // Log additional error details
-      if (error instanceof Error) {
-      }
-      
-      // Propagate error so the caller can display a specific message
-      throw error;
-    }
-  };
-
   const logout = async () => {
     try {
       await signOutUser();
@@ -219,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, setupAccount, signup, setCurrentFacility }}>
+    <AuthContext.Provider value={{ ...authState, login, logout, setCurrentFacility }}>
       {children}
     </AuthContext.Provider>
   );
