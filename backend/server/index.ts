@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { FRONTEND_URL, PORT } from '../config/env.js';
 import { createOrder, captureOrder } from '../services/payments.js';
@@ -6,6 +6,7 @@ import { getItems } from '../services/db.js';
 import * as appDb from '../services/app/database.js';
 import * as appCashbox from '../services/app/cashbox-database.js';
 import * as appPaypal from '../services/app/paypal.js';
+import { getSupabaseAdmin } from '../config/supabase.js';
 
 const app = express();
 
@@ -14,12 +15,12 @@ app.use(cors({ origin: [FRONTEND_URL, 'https://trust1.netlify.app'], credentials
 app.options('*', cors({ origin: [FRONTEND_URL, 'https://trust1.netlify.app'], credentials: true }));
 app.use(express.json());
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
 // Example DB route
-app.get('/api/items', async (_req, res) => {
+app.get('/api/items', async (_req: Request, res: Response) => {
   try {
     const items = await getItems();
     res.json({ items });
@@ -29,7 +30,7 @@ app.get('/api/items', async (_req, res) => {
 });
 
 // PayPal routes
-app.post('/api/payments/create-order', async (req, res) => {
+app.post('/api/payments/create-order', async (req: Request, res: Response) => {
   try {
     const { amount, currency } = req.body ?? {};
     if (!amount || !currency) return res.status(400).json({ error: 'amount and currency are required' });
@@ -40,7 +41,7 @@ app.post('/api/payments/create-order', async (req, res) => {
   }
 });
 
-app.post('/api/payments/capture-order', async (req, res) => {
+app.post('/api/payments/capture-order', async (req: Request, res: Response) => {
   try {
     const { orderId } = req.body ?? {};
     if (!orderId) return res.status(400).json({ error: 'orderId is required' });
@@ -48,6 +49,50 @@ app.post('/api/payments/capture-order', async (req, res) => {
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message ?? 'Unknown error' });
+  }
+});
+
+// Accept terms: records timestamp (and optional version) for the authenticated user
+app.post('/api/users/accept-terms', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers['authorization'] || '';
+    const token = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+      ? authHeader.slice('Bearer '.length)
+      : null;
+    if (!token) {
+      return res.status(401).json({ error: 'Missing Authorization bearer token' });
+    }
+
+    const admin = getSupabaseAdmin();
+    const { data: userData, error: userErr } = await (admin as any).auth.getUser(token);
+    if (userErr || !userData?.user?.id) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    const authUserId = userData.user.id as string;
+    const nowIso = new Date().toISOString();
+    const updatePayload: any = { terms_accepted_at: nowIso };
+    if (req.body && typeof req.body.termsVersion === 'string' && req.body.termsVersion.trim().length > 0) {
+      updatePayload.terms_version = req.body.termsVersion.trim();
+    }
+
+    const { data: profile, error: upErr } = await (admin as any)
+      .from('users')
+      .update(updatePayload)
+      .eq('auth_user_id', authUserId)
+      .select('id, terms_accepted_at, terms_version')
+      .maybeSingle();
+
+    if (upErr) {
+      return res.status(500).json({ error: upErr.message || 'Failed to update terms' });
+    }
+    if (!profile) {
+      return res.status(404).json({ error: 'User profile not found' });
+    }
+
+    return res.json({ success: true, termsAcceptedAt: profile.terms_accepted_at, termsVersion: profile.terms_version });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message || 'Unexpected error' });
   }
 });
 
@@ -130,7 +175,7 @@ const rpcAllowlist: Record<string, any> = {
   fetchPayPalConfig: appPaypal.fetchPayPalConfig,
 };
 
-app.post('/api/rpc', async (req, res) => {
+app.post('/api/rpc', async (req: Request, res: Response) => {
   try {
     const { method, params } = req.body || {};
     if (!method || typeof method !== 'string') {
