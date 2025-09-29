@@ -53,32 +53,28 @@ export default function ConfirmSignupResident() {
 
     const processAuthFromUrl = async () => {
       try {
-        const hash = typeof window !== 'undefined' ? window.location.hash : '';
-        if (hash === '#') {
-          if (typeof window !== 'undefined') {
-            window.history.replaceState({}, '', window.location.pathname + window.location.search);
-          }
+        if (typeof window === 'undefined') return;
+        const { hash, search, pathname } = window.location;
+
+        // Read params from both hash and query string (Supabase may use either)
+        const hashParams = hash && hash !== '#' ? new URLSearchParams(hash.substring(1)) : new URLSearchParams();
+        const queryParams = search ? new URLSearchParams(search) : new URLSearchParams();
+
+        const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+        const code = hashParams.get('code') || queryParams.get('code');
+
+        if (accessToken && refreshToken) {
+          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          window.history.replaceState({}, '', pathname);
           return;
         }
-        if (hash && hash.length > 1) {
-          const params = new URLSearchParams(hash.substring(1));
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
-          const code = params.get('code');
 
-          if (accessToken && refreshToken) {
-            await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-            if (typeof window !== 'undefined') {
-              window.history.replaceState({}, '', window.location.pathname + window.location.search);
-            }
-          } else if (code) {
-            try {
-              await supabase.auth.exchangeCodeForSession(code);
-            } catch (_) {}
-            if (typeof window !== 'undefined') {
-              window.history.replaceState({}, '', window.location.pathname + window.location.search);
-            }
-          }
+        if (code) {
+          try {
+            await supabase.auth.exchangeCodeForSession(code);
+          } catch (_) {}
+          window.history.replaceState({}, '', pathname);
         }
       } catch (_) {}
     };
