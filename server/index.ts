@@ -646,9 +646,13 @@ app.post('/api/residents/services', async (req, res) => {
       .maybeSingle();
     if (rErr || !residentRow) return res.status(404).json({ error: rErr?.message || 'Resident not found' });
 
+    // Record both allowed services and acceptance snapshot in service_authorizations
     const { error: upErr } = await supabaseAdmin
       .from('residents')
-      .update({ allowed_services: allowedServices })
+      .update({
+        allowed_services: allowedServices,
+        service_authorizations: allowedServices
+      })
       .eq('id', (residentRow as any).id);
     if (upErr) return res.status(400).json({ error: upErr.message });
     return res.json({ success: true });
