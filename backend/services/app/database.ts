@@ -633,7 +633,7 @@ export async function createResident(residentData: Omit<Resident, 'id' | 'create
   }
 }
 
-// Creates auth user (auth.users) via service key, inserts into public.users, links to resident, and emails POA to reset password
+// Creates auth user (auth.users) via service key, inserts into public.users, links to resident, and sends Supabase invitation email
 export async function createResidentWithLinkedUser(params: {
   resident: Omit<Resident, 'id' | 'createdAt' | 'linkedUserId'>;
   poa?: { email: string; name: string } | null;
@@ -698,9 +698,21 @@ export async function createResidentWithLinkedUser(params: {
     const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app';
     const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
     const redirectTo = `${baseUrl}/confirm-signup/resident/`;
-    const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
-    if (resetError) {
-      throw resetError;
+    const { error: inviteErr } = await (supabaseAdmin as any).auth.admin.inviteUserByEmail(email, {
+      redirectTo,
+      data: {
+        role: 'Resident',
+        facilityId: resident.facilityId,
+        residentId: createdResident.id,
+        ...(companyId ? { companyId } : {}),
+        name
+      }
+    });
+    if (inviteErr) {
+      const msg = (inviteErr as any)?.message?.toLowerCase?.() || '';
+      if (!msg.includes('already') && !msg.includes('exist') && !msg.includes('registered')) {
+        throw inviteErr;
+      }
     }
 
     return dbResidentToResident(linkedResident as any);
@@ -761,9 +773,21 @@ export async function createResidentWithLinkedUser(params: {
     const siteUrlEnv = process.env.PUBLIC_SITE_URL || process.env.VITE_PUBLIC_SITE_URL || 'https://trust1.netlify.app';
     const baseUrl = siteUrlEnv.replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '');
     const redirectTo = `${baseUrl}/confirm-signup/resident/`;
-    const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
-    if (resetError) {
-      throw resetError;
+    const { error: inviteErr } = await (supabaseAdmin as any).auth.admin.inviteUserByEmail(email, {
+      redirectTo,
+      data: {
+        role: 'POA',
+        facilityId: resident.facilityId,
+        residentId: createdResident.id,
+        ...(companyId ? { companyId } : {}),
+        name
+      }
+    });
+    if (inviteErr) {
+      const msg = (inviteErr as any)?.message?.toLowerCase?.() || '';
+      if (!msg.includes('already') && !msg.includes('exist') && !msg.includes('registered')) {
+        throw inviteErr;
+      }
     }
 
     return dbResidentToResident(linkedResident as any);
