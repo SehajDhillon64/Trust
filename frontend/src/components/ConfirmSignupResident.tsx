@@ -202,10 +202,9 @@ export default function ConfirmSignupResident() {
     setUpdating(true);
     setError('');
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token || null;
       const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/services`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ allowedServices: selectedServices })
       });
@@ -239,10 +238,9 @@ export default function ConfirmSignupResident() {
     }
     setSubmitting(true);
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token || null;
       const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ password })
       });
