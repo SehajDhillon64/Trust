@@ -15,6 +15,8 @@ export default function ConfirmSignupResident() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [acceptingTerms, setAcceptingTerms] = useState(false);
   const initialServices = useMemo(() => ({
     haircare: false,
     footcare: false,
@@ -199,6 +201,37 @@ export default function ConfirmSignupResident() {
 
 
 
+  const handleAcceptTerms = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setAcceptingTerms(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token || null;
+      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/accept-terms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          termsVersion: 'v1',
+          termsAcceptedAt: new Date().toISOString(),
+        }),
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to record terms acceptance');
+      }
+      setStep(3);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to record terms acceptance');
+    } finally {
+      setAcceptingTerms(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
@@ -241,6 +274,7 @@ export default function ConfirmSignupResident() {
         <h1 className="text-xl font-semibold mb-2 text-black">Confirm Signup</h1>
         <p className="text-gray-600 mb-4">
           {step === 1 && 'Confirm resident name and date of birth.'}
+          {step === 2 && 'Review and accept the terms to continue.'}
           {step === 3 && 'Set your password to complete setup.'}
         </p>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-2 rounded mb-3">{error}</div>}
@@ -282,7 +316,28 @@ export default function ConfirmSignupResident() {
           </form>
         )}
 
-        
+        {step === 2 && (
+          <form onSubmit={handleAcceptTerms} className="space-y-4 mb-6">
+            <div className="text-sm text-black">
+              Please review and accept our Terms of Service to continue.
+            </div>
+            <div className="flex items-start space-x-2">
+              <input
+                id="accept-terms"
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1"
+              />
+              <label htmlFor="accept-terms" className="text-sm text-black">
+                I agree to the Terms of Service and Privacy Policy.
+              </label>
+            </div>
+            <button type="submit" disabled={!termsAccepted || acceptingTerms} className="w-full bg-blue-600 text-white rounded py-2">
+              {acceptingTerms ? 'Saving…' : 'I Agree, Continue'}
+            </button>
+          </form>
+        )}
 
         {step === 3 && (
           <form onSubmit={handleSubmit} className="space-y-4">
