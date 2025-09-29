@@ -250,9 +250,14 @@ export default function ConfirmSignupResident() {
     }
     setSubmitting(true);
     try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token || null;
       const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         credentials: 'include',
         body: JSON.stringify({ password })
       });
