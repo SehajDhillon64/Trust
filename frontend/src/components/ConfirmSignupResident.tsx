@@ -197,28 +197,7 @@ export default function ConfirmSignupResident() {
     }
   };
 
-  const saveSelectedServices = async () => {
-    if (!resident) return;
-    setUpdating(true);
-    setError('');
-    try {
-      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/services`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ allowedServices: selectedServices })
-      });
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => ({}));
-        throw new Error(body?.error || 'Failed to save services');
-      }
-      setStep(3);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to save services');
-    } finally {
-      setUpdating(false);
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
