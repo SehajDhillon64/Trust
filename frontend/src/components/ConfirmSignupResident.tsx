@@ -31,6 +31,26 @@ export default function ConfirmSignupResident() {
   useEffect(() => {
     let isMounted = true;
 
+    const getAccessToken = async (): Promise<string | null> => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        return data.session?.access_token || null;
+      } catch {
+        return null;
+      }
+    };
+
+    const materializeProfile = async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token) return;
+        await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include'
+        }).catch(() => {});
+      } catch {}
+    };
+
     const processAuthFromUrl = async () => {
       try {
         const hash = typeof window !== 'undefined' ? window.location.hash : '';
@@ -63,22 +83,26 @@ export default function ConfirmSignupResident() {
       } catch (_) {}
     };
 
-    const loadLinkedResident = async () => {
+    const loadLinkedResident = async (): Promise<boolean> => {
       setLookupLoading(true);
       setError('');
       try {
+        const token = await getAccessToken();
         const r = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/me`, {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
           credentials: 'include'
         });
         if (!r.ok) {
           const body = await r.json().catch(() => ({}));
           setError(body?.error || 'Not authenticated. Use the email link.');
-          return;
+          return false;
         }
         const residentRow = await r.json();
         if (!residentRow) {
           setError('No resident is linked to this account.');
-          return;
+          return false;
         }
         if (isMounted) {
           setResident(residentRow);
@@ -92,8 +116,10 @@ export default function ConfirmSignupResident() {
           };
           setSelectedServices(defaults);
         }
+        return true;
       } catch (e: any) {
         setError(e?.message || 'Unexpected error loading account.');
+        return false;
       } finally {
         if (isMounted) setLookupLoading(false);
       }
@@ -114,6 +140,8 @@ export default function ConfirmSignupResident() {
             credentials: 'include',
             body: JSON.stringify({ accessToken, refreshToken }),
           }).catch(() => {});
+          // Proactively materialize profile so subsequent resident load succeeds even if cookies are blocked
+          await materializeProfile();
         }
       } catch (_) {
       }
@@ -122,7 +150,13 @@ export default function ConfirmSignupResident() {
     (async () => {
       await processAuthFromUrl();
       await exchangeSessionForCookies();
-      if (isMounted) await loadLinkedResident();
+      if (isMounted) {
+        const ok = await loadLinkedResident();
+        if (!ok) {
+          await materializeProfile();
+          await loadLinkedResident();
+        }
+      }
     })();
 
     return () => {
@@ -157,9 +191,10 @@ export default function ConfirmSignupResident() {
     setUpdating(true);
     setError('');
     try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token || null;
       const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/accept-terms`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         credentials: 'include',
         body: JSON.stringify({ termsVersion: 'v1', termsAcceptedAt: new Date().toISOString() })
       });
@@ -181,9 +216,10 @@ export default function ConfirmSignupResident() {
     setUpdating(true);
     setError('');
     try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token || null;
       const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/services`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         credentials: 'include',
         body: JSON.stringify({ allowedServices: selectedServices })
       });
@@ -217,9 +253,10 @@ export default function ConfirmSignupResident() {
     }
     setSubmitting(true);
     try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token || null;
       const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         credentials: 'include',
         body: JSON.stringify({ password })
       });
