@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../config/supabase';
 
 export default function ConfirmSignupResident() {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [fullName, setFullName] = useState('');
@@ -15,7 +15,6 @@ export default function ConfirmSignupResident() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const initialServices = useMemo(() => ({
     haircare: false,
     footcare: false,
@@ -188,37 +187,13 @@ export default function ConfirmSignupResident() {
       const dobResidentNorm = String(resident.dob || '').slice(0, 10);
       if (nameMatches && dobInputNorm && dobInputNorm === dobResidentNorm) {
         setVerified(true);
-        setStep(4);
+        setStep(2);
       } else {
         setVerified(false);
         setError('Verification failed. Name and DOB do not match our records.');
       }
     } finally {
       setVerifying(false);
-    }
-  };
-
-  const saveTermsAcceptance = async () => {
-    setUpdating(true);
-    setError('');
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token || null;
-      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/accept-terms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        credentials: 'include',
-        body: JSON.stringify({ termsVersion: 'v1', termsAcceptedAt: new Date().toISOString() })
-      });
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => ({}));
-        throw new Error(body?.error || 'Failed to record acceptance');
-      }
-      setAcceptedTerms(true);
-      setStep(2);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to record acceptance');
-    } finally {
-      setUpdating(false);
     }
   };
 
@@ -288,56 +263,14 @@ export default function ConfirmSignupResident() {
       <div className="bg-white w-full max-w-md rounded-xl shadow p-6">
         <h1 className="text-xl font-semibold mb-2 text-black">Confirm Signup</h1>
         <p className="text-gray-600 mb-4">
-          {step === 1 && 'Please review and accept the service conditions.'}
+          {step === 1 && 'Confirm resident name and date of birth.'}
           {step === 2 && 'Select services you authorize for this resident.'}
-          {step === 3 && 'Confirm resident name and date of birth.'}
-          {step === 4 && 'Set your password to complete setup.'}
+          {step === 3 && 'Set your password to complete setup.'}
         </p>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-2 rounded mb-3">{error}</div>}
         {message && <div className="bg-green-50 border border-green-200 text-green-700 text-sm p-2 rounded mb-3">{message}</div>}
 
         {step === 1 && (
-          <div className="space-y-4 mb-6">
-            <div className="h-52 overflow-y-auto border rounded p-3 text-sm text-black/80">
-              <p>
-                By continuing, you agree to the Service Conditions and Privacy Policy. You consent to
-                electronic communications and will use this system only for authorized purposes.
-              </p>
-              <p className="mt-2">
-                For full details, contact your facility administrator. Version: v1.
-              </p>
-            </div>
-            <label className="inline-flex items-center space-x-2 text-black">
-              <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
-              <span>I accept the service conditions</span>
-            </label>
-            <button type="button" onClick={saveTermsAcceptance} disabled={!acceptedTerms || updating} className="w-full bg-blue-600 text-white rounded py-2">
-              {updating ? 'Saving…' : 'Continue'}
-            </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4 mb-6">
-            <div className="grid grid-cols-2 gap-3">
-              {Object.keys(initialServices).map((key) => (
-                <label key={key} className="inline-flex items-center space-x-2 text-black">
-                  <input
-                    type="checkbox"
-                    checked={!!selectedServices[key]}
-                    onChange={(e) => setSelectedServices({ ...selectedServices, [key]: e.target.checked })}
-                  />
-                  <span className="capitalize">{key}</span>
-                </label>
-              ))}
-            </div>
-            <button type="button" onClick={saveSelectedServices} disabled={updating || !resident} className="w-full bg-blue-600 text-white rounded py-2">
-              {updating ? 'Saving…' : 'Continue'}
-            </button>
-          </div>
-        )}
-
-        {step === 3 && (
           <form onSubmit={handleVerify} className="space-y-4 mb-6">
             <div>
               <label className="block text-sm font-medium mb-1 text-black">Resident Full Name</label>
@@ -373,7 +306,27 @@ export default function ConfirmSignupResident() {
           </form>
         )}
 
-        {step === 4 && (
+        {step === 2 && (
+          <div className="space-y-4 mb-6">
+            <div className="grid grid-cols-2 gap-3">
+              {Object.keys(initialServices).map((key) => (
+                <label key={key} className="inline-flex items-center space-x-2 text-black">
+                  <input
+                    type="checkbox"
+                    checked={!!selectedServices[key]}
+                    onChange={(e) => setSelectedServices({ ...selectedServices, [key]: e.target.checked })}
+                  />
+                  <span className="capitalize">{key}</span>
+                </label>
+              ))}
+            </div>
+            <button type="button" onClick={saveSelectedServices} disabled={updating || !resident} className="w-full bg-blue-600 text-white rounded py-2">
+              {updating ? 'Saving…' : 'Continue'}
+            </button>
+          </div>
+        )}
+
+        {step === 3 && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1 text-black">New Password</label>
