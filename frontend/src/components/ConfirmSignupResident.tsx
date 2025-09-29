@@ -241,7 +241,6 @@ export default function ConfirmSignupResident() {
         <h1 className="text-xl font-semibold mb-2 text-black">Confirm Signup</h1>
         <p className="text-gray-600 mb-4">
           {step === 1 && 'Confirm resident name and date of birth.'}
-          {step === 2 && 'Select services you authorize for this resident.'}
           {step === 3 && 'Set your password to complete setup.'}
         </p>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-2 rounded mb-3">{error}</div>}
