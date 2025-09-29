@@ -83,23 +83,38 @@ export default function ConfirmSignupResident() {
       setLookupLoading(true);
       setError('');
       try {
-        const token = await getAccessToken();
-        const r = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/me`, {
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-          },
-          credentials: 'include'
-        });
-        if (!r.ok) {
-          const body = await r.json().catch(() => ({}));
-          setError(body?.error || 'Not authenticated. Use the email link.');
+        // Mirror ResetPasswordResident logic: derive auth_user_id -> users -> residents
+        const { data: session } = await supabase.auth.getSession();
+        const authUserId = session.session?.user?.id;
+        if (!authUserId) {
+          setError('No active session. Open this link from your email.');
           return false;
         }
-        const residentRow = await r.json();
+
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('auth_user_id', authUserId)
+          .single();
+        if (profileError || !profile) {
+          setError('Unable to load your account. Please contact support.');
+          return false;
+        }
+
+        const { data: residentRow, error: residentError } = await supabase
+          .from('residents')
+          .select('*')
+          .eq('linked_user_id', profile.id)
+          .maybeSingle();
+        if (residentError) {
+          setError('Failed to load resident. Please try again later.');
+          return false;
+        }
         if (!residentRow) {
           setError('No resident is linked to this account.');
           return false;
         }
+
         if (isMounted) {
           setResident(residentRow);
           const defaults = {
