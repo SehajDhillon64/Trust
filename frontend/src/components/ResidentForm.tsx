@@ -32,7 +32,7 @@ export default function ResidentForm({ onClose }: ResidentFormProps) {
       pharmacy: true,
       cable: true,
       wheelchairRepair: true,
-      miscellaneous: false
+      miscellaneous: true
     }
   });
 const [formError, setFormError] = useState<string | null>(null);
