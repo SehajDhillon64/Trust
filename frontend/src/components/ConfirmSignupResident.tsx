@@ -250,16 +250,8 @@ export default function ConfirmSignupResident() {
     }
     setSubmitting(true);
     try {
-      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password })
-      });
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => ({}));
-        throw new Error(body?.error || 'Failed to update password');
-      }
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
       setMessage('Setup complete. You can now sign in.');
     } catch (e: any) {
       setError(e?.message || 'Failed to update password');
