@@ -1077,6 +1077,68 @@ export default function OMDashboard() {
               </div>
             </div>
 
+            {/* Residents Mail Preferences Overview */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-md font-semibold text-gray-900">Resident Mail Delivery Preferences</h3>
+                  <p className="text-gray-500 text-sm">Quick view of each resident's preference for facility mail delivery</p>
+                </div>
+                <button
+                  onClick={() => {
+                    // Export CSV
+                    const rows = [['Resident', 'Preference', 'Note']].concat(
+                      facilityResidents.map(r => [
+                        r.name,
+                        r.mailDeliveryPreference || 'resident_room',
+                        r.mailDeliveryNote || ''
+                      ])
+                    );
+                    const csv = rows.map(cols => cols.map(c => '"' + String(c).replaceAll('"', '""') + '"').join(',')).join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `resident_mail_preferences_${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                  }}
+                  className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+              <div className="overflow-x-auto border rounded-lg">
+                <table className="w-full table-auto text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-gray-600">Resident</th>
+                      <th className="px-3 py-2 text-left text-gray-600">Preference</th>
+                      <th className="px-3 py-2 text-left text-gray-600">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {facilityResidents.length === 0 ? (
+                      <tr>
+                        <td className="px-3 py-3 text-gray-500" colSpan={3}>No residents</td>
+                      </tr>
+                    ) : (
+                      facilityResidents.map(r => (
+                        <tr key={r.id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-gray-900">{r.name}</td>
+                          <td className="px-3 py-2 text-gray-900">
+                            {r.mailDeliveryPreference === 'reception' ? 'Hold at Reception' : r.mailDeliveryPreference === 'other' ? 'Other' : 'Deliver to Resident Room'}
+                          </td>
+                          <td className="px-3 py-2 text-gray-900">{r.mailDeliveryNote || '-'}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             {/* Recent Activity */}
           
           </div>

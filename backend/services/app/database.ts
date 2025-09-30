@@ -175,7 +175,9 @@ function dbResidentToResident(dbResident: Tables['residents']['Row']): Resident 
     facilityId: dbResident.facility_id,
     bankDetails: dbResident.bank_details || undefined,
     allowedServices: dbResident.allowed_services,
-    serviceAuthorizations: dbResident.service_authorizations || undefined
+    serviceAuthorizations: dbResident.service_authorizations || undefined,
+    mailDeliveryPreference: (dbResident as any).mail_delivery_preference || undefined,
+    mailDeliveryNote: (dbResident as any).mail_delivery_note || undefined
   }
 }
 
@@ -970,6 +972,8 @@ export async function updateResident(id: string, updates: Partial<Resident>) {
     if (updates.bankDetails !== undefined) dbUpdates.bank_details = updates.bankDetails
     if (updates.allowedServices !== undefined) dbUpdates.allowed_services = updates.allowedServices
     if (updates.serviceAuthorizations !== undefined) dbUpdates.service_authorizations = updates.serviceAuthorizations
+    if ((updates as any).mailDeliveryPreference !== undefined) (dbUpdates as any).mail_delivery_preference = (updates as any).mailDeliveryPreference
+    if ((updates as any).mailDeliveryNote !== undefined) (dbUpdates as any).mail_delivery_note = (updates as any).mailDeliveryNote
 
     const { data, error } = await supabase
       .from('residents')
@@ -983,6 +987,42 @@ export async function updateResident(id: string, updates: Partial<Resident>) {
   } catch (error) {
     throw error
   }
+}
+
+// Mail delivery preference helpers
+export async function updateResidentMailPreference(
+  residentId: string,
+  preference: 'resident_room' | 'reception' | 'other',
+  note?: string
+): Promise<Resident> {
+  const { data, error } = await supabase
+    .from('residents')
+    .update({
+      mail_delivery_preference: preference as any,
+      mail_delivery_note: typeof note === 'string' ? note : null
+    })
+    .eq('id', residentId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return dbResidentToResident(data as any);
+}
+
+export async function listResidentMailPreferencesByFacility(
+  facilityId: string
+): Promise<Array<{ id: string; name: string; mailDeliveryPreference: 'resident_room' | 'reception' | 'other' | null; mailDeliveryNote?: string }>> {
+  const { data, error } = await supabase
+    .from('residents')
+    .select('id, name, mail_delivery_preference, mail_delivery_note')
+    .eq('facility_id', facilityId)
+    .order('name');
+  if (error) throw error;
+  return (data || []).map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    mailDeliveryPreference: r.mail_delivery_preference || null,
+    mailDeliveryNote: r.mail_delivery_note || undefined,
+  }));
 }
 
 export async function getTotalTrustBalances(facilityId: string): Promise<number> {
