@@ -60,7 +60,8 @@ import {
   createOfficeManagerUser,
   getOmUsers,
   clearFacilityForUser
- } from '../services/database';
+} from '../services/database';
+import { updateResidentMailPreference as updateResidentMailPreferenceDb } from '../services/database';
 // Removed legacy emailService; using server-backed Supabase invites instead
 // Import cash box functions from new service
 import {
@@ -197,6 +198,7 @@ interface DataContextType {
   // Office Manager admin helpers
   listOfficeManagers: () => Promise<User[]>;
   clearOfficeManagerFacility: (userId: string) => Promise<void>;
+  updateResidentMailPreference: (residentId: string, preference: 'resident_room' | 'reception' | 'other', note?: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -530,6 +532,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       );
     } catch (err) {
       throw err;
+    }
+  };
+
+  const updateResidentMailPreference = async (residentId: string, preference: 'resident_room' | 'reception' | 'other', note?: string) => {
+    try {
+      const updated = await updateResidentMailPreferenceDb(residentId, preference, note);
+      setResidents(prev => prev.map(r => r.id === residentId ? { ...r, mailDeliveryPreference: updated.mailDeliveryPreference, mailDeliveryNote: updated.mailDeliveryNote } : r));
+    } catch (e) {
+      throw e;
     }
   };
 
@@ -1506,7 +1517,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     },
     clearOfficeManagerFacility: async (userId: string) => {
       await clearFacilityForUser(userId);
-    }
+    },
+    updateResidentMailPreference,
   };
 
   return (

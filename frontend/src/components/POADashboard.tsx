@@ -14,7 +14,7 @@ export default function POADashboard() {
   const [showMonthlyReport, setShowMonthlyReport] = useState(false);
   const [showPreAuthForm, setShowPreAuthForm] = useState(false);
   const [showOnlinePayment, setShowOnlinePayment] = useState(false);
-  const { residents, transactions, getResidentTransactions, updateResident, facilities, getResidentPreAuthDebits, isLoading } = useData();
+  const { residents, transactions, getResidentTransactions, updateResident, facilities, getResidentPreAuthDebits, isLoading, updateResidentMailPreference } = useData();
   const { user, logout } = useAuth();
 
   
@@ -222,6 +222,72 @@ export default function POADashboard() {
                   Add Funds Online
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Mail Delivery Preference */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Mail Delivery Preference</h2>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">How should the facility deliver your mail?</label>
+                <select
+                  value={linkedResident.mailDeliveryPreference || 'resident_room'}
+                  onChange={async (e) => {
+                    const pref = e.target.value as 'resident_room' | 'reception' | 'other';
+                    try {
+                      if (updateResidentMailPreference) {
+                        await updateResidentMailPreference(linkedResident.id, pref, pref === 'other' ? (linkedResident.mailDeliveryNote || '') : undefined);
+                      } else {
+                        await updateResident(linkedResident.id, { mailDeliveryPreference: pref } as any);
+                      }
+                    } catch {}
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="resident_room">Deliver to Resident Room</option>
+                  <option value="reception">Hold at Reception</option>
+                  <option value="other">Other (specify below)</option>
+                </select>
+              </div>
+
+              {(linkedResident.mailDeliveryPreference === 'other') && (
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Note (if Other)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      defaultValue={linkedResident.mailDeliveryNote || ''}
+                      placeholder="e.g., Deliver to nurse station, specific instructions"
+                      onBlur={async (e) => {
+                        try {
+                          if (updateResidentMailPreference) {
+                            await updateResidentMailPreference(linkedResident.id, 'other', e.target.value);
+                          } else {
+                            await updateResident(linkedResident.id, { mailDeliveryPreference: 'other', mailDeliveryNote: e.target.value } as any);
+                          }
+                        } catch {}
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <button
+                      onClick={async () => {
+                        try {
+                          if (updateResidentMailPreference) {
+                            await updateResidentMailPreference(linkedResident.id, 'other', linkedResident.mailDeliveryNote || '');
+                          }
+                        } catch {}
+                      }}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">This note is visible to the office manager.</p>
+                </div>
+              )}
             </div>
           </div>
 

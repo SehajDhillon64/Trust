@@ -154,6 +154,9 @@ const rpcAllowlist: Record<string, any> = {
   createVendorUserAndLink: appDb.createVendorUserAndLink,
   unlinkVendorFromFacility: appDb.unlinkVendorFromFacility,
   linkVendorToFacility: appDb.linkVendorToFacility,
+  // mail delivery preferences
+  updateResidentMailPreference: appDb.updateResidentMailPreference,
+  listResidentMailPreferencesByFacility: appDb.listResidentMailPreferencesByFacility,
   createSignupInvitation: appDb.createSignupInvitation,
   createSignupInvitationForResident: appDb.createSignupInvitationForResident,
   sendInvitationEmail: appDb.sendInvitationEmail,

@@ -56,6 +56,14 @@ export async function createVendorUserAndLink(facilityId: string, email: string,
 export async function unlinkVendorFromFacility(vendorUserId: string, facilityId: string) { return rpcCall('unlinkVendorFromFacility', [vendorUserId, facilityId]) }
 export async function linkVendorToFacility(vendorUserId: string, facilityId: string) { return rpcCall('linkVendorToFacility', [vendorUserId, facilityId]) }
 
+// Mail delivery preferences
+export async function updateResidentMailPreference(residentId: string, preference: 'resident_room' | 'reception' | 'other', note?: string) {
+  return rpcCall<Resident>('updateResidentMailPreference', [residentId, preference, note])
+}
+export async function listResidentMailPreferencesByFacility(facilityId: string) {
+  return rpcCall<Array<{ id: string; name: string; mailDeliveryPreference: 'resident_room' | 'reception' | 'other' | null; mailDeliveryNote?: string }>>('listResidentMailPreferencesByFacility', [facilityId])
+}
+
 export async function createSignupInvitationForResident(residentData: { email: string; name: string; facilityId: string; isSelfManaged: boolean; poaEmail?: string; poaName?: string; residentId?: string }, invitedBy: string) { return rpcCall('createSignupInvitationForResident', [residentData, invitedBy]) }
 export async function createSignupInvitation(facilityId: string, email: string, role: 'OM' | 'POA' | 'Resident', invitedBy: string) { return rpcCall<SignupInvitation>('createSignupInvitation', [facilityId, email, role, invitedBy]) }
 export async function sendInvitationEmail(invitation: SignupInvitation, facilityName: string) { return rpcCall<boolean>('sendInvitationEmail', [invitation, facilityName]) }

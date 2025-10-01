@@ -83,6 +83,8 @@ export interface Resident {
     wheelchairRepair: boolean;
     miscellaneous: boolean;
   };
+  mailDeliveryPreference?: 'resident_room' | 'reception' | 'other';
+  mailDeliveryNote?: string;
 }
 
 export interface Transaction {

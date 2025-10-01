@@ -36,6 +36,8 @@ export interface Resident {
   bankDetails?: any;
   allowedServices: any;
   serviceAuthorizations?: any;
+  mailDeliveryPreference?: 'resident_room' | 'reception' | 'other';
+  mailDeliveryNote?: string;
 }
 
 export interface Transaction {
