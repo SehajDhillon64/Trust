@@ -1090,7 +1090,7 @@ export default function OMDashboard() {
                     const rows = [['Resident', 'Preference', 'Note']].concat(
                       facilityResidents.map(r => [
                         r.name,
-                        r.mailDeliveryPreference || 'resident_room',
+                        r.mailDeliveryPreference ?? '',
                         r.mailDeliveryNote || ''
                       ])
                     );
@@ -1128,7 +1128,13 @@ export default function OMDashboard() {
                         <tr key={r.id} className="hover:bg-gray-50">
                           <td className="px-3 py-2 text-gray-900">{r.name}</td>
                           <td className="px-3 py-2 text-gray-900">
-                            {r.mailDeliveryPreference === 'reception' ? 'Hold at Reception' : r.mailDeliveryPreference === 'other' ? 'Other' : 'Deliver to Resident Room'}
+                            {r.mailDeliveryPreference === 'reception'
+                              ? 'Hold at Reception'
+                              : r.mailDeliveryPreference === 'other'
+                              ? 'Other'
+                              : r.mailDeliveryPreference === 'resident_room'
+                              ? 'Deliver to Resident Room'
+                              : ''}
                           </td>
                           <td className="px-3 py-2 text-gray-900">{r.mailDeliveryNote || '-'}</td>
                         </tr>

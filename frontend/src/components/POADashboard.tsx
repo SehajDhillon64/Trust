@@ -243,7 +243,7 @@ export default function POADashboard() {
               <div>
                 <label className="block text-sm text-gray-600 mb-1">How should the facility deliver your mail?</label>
                 <select
-                  value={linkedResident.mailDeliveryPreference || 'resident_room'}
+                  value={linkedResident.mailDeliveryPreference || ''}
                   onChange={async (e) => {
                     const pref = e.target.value as 'resident_room' | 'reception' | 'other';
                     try {
@@ -256,6 +256,7 @@ export default function POADashboard() {
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
+                  <option value="" disabled>Select a preference...</option>
                   <option value="resident_room">Deliver to Resident Room</option>
                   <option value="reception">Hold at Reception</option>
                   <option value="other">Other (specify below)</option>
