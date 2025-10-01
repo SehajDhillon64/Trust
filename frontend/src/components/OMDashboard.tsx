@@ -1130,10 +1130,10 @@ export default function OMDashboard() {
                           <td className="px-3 py-2 text-gray-900">
                             {r.mailDeliveryPreference === 'reception'
                               ? 'Hold at Reception'
-                              : r.mailDeliveryPreference === 'other'
-                              ? 'Other'
                               : r.mailDeliveryPreference === 'resident_room'
                               ? 'Deliver to Resident Room'
+                              : r.mailDeliveryPreference === 'other'
+                              ? 'Other'
                               : ''}
                           </td>
                           <td className="px-3 py-2 text-gray-900">{r.mailDeliveryNote || '-'}</td>
