@@ -14,6 +14,7 @@ export default function POADashboard() {
   const [showMonthlyReport, setShowMonthlyReport] = useState(false);
   const [showPreAuthForm, setShowPreAuthForm] = useState(false);
   const [showOnlinePayment, setShowOnlinePayment] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'mail' | 'preauth' | 'history'>('overview');
   const { residents, transactions, getResidentTransactions, updateResident, facilities, getResidentPreAuthDebits, isLoading, updateResidentMailPreference } = useData();
   const { user, logout } = useAuth();
 
@@ -138,11 +139,11 @@ export default function POADashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="p-6 max-w-4xl mx-auto">
+      <main className="p-6 max-w-4xl mx-auto pb-24 sm:pb-6">
         <div className="space-y-6">
-          {/* Facility Info Banner */}
+          {/* Facility Info Banner - only on Overview tab for small screens */}
           {residentFacility && (
-            <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-sm text-white p-6">
+            <div className={`bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-sm text-white p-6 ${activeTab === 'overview' ? 'block' : 'hidden'} sm:block`}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold mb-1">Community: {residentFacility.name}</h2>
@@ -157,8 +158,8 @@ export default function POADashboard() {
             </div>
           )}
 
-          {/* Account Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Account Overview - gated by tab on small screens */}
+          <div className={`${activeTab === 'overview' ? 'grid' : 'hidden'} sm:grid grid-cols-1 md:grid-cols-2 gap-6`}>
             {/* Resident Info */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-4 mb-4">
@@ -234,8 +235,8 @@ export default function POADashboard() {
             </div>
           </div>
 
-          {/* Mail Delivery Preference */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          {/* Mail Delivery Preference - gated by tab on small screens */}
+          <div className={`${activeTab === 'mail' ? 'block' : 'hidden'} sm:block bg-white rounded-xl shadow-sm border border-gray-200 p-6`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Mail Delivery Preference</h2>
             </div>
@@ -304,8 +305,9 @@ export default function POADashboard() {
             </div>
           </div>
 
-          {/* Pre-Authorization Debits */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          {/* Pre-Authorization Debits - gated by tab on small screens */}
+          <div className={`${activeTab === 'preauth' ? 'block' : 'hidden'} sm:block bg-white rounded-xl shadow-sm border border-gray-200`}
+          >
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Calendar className="w-5 h-5 text-orange-600" />
@@ -438,8 +440,8 @@ export default function POADashboard() {
             })()}
           </div>
 
-          {/* Recent Transactions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          {/* Recent Transactions - gated by tab on small screens */}
+          <div className={`${activeTab === 'history' ? 'block' : 'hidden'} sm:block bg-white rounded-xl shadow-sm border border-gray-200`}>
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <History className="w-5 h-5 text-gray-600" />
@@ -643,6 +645,40 @@ export default function POADashboard() {
           }}
         />
       )}
+
+      {/* Bottom Tab Bar - mobile only */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
+        <div className="grid grid-cols-4">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`flex flex-col items-center justify-center py-2 ${activeTab === 'overview' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
+            <User className="w-5 h-5" />
+            <span className="text-xs">Overview</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('mail')}
+            className={`flex flex-col items-center justify-center py-2 ${activeTab === 'mail' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
+            <FileText className="w-5 h-5" />
+            <span className="text-xs">Mail</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('preauth')}
+            className={`flex flex-col items-center justify-center py-2 ${activeTab === 'preauth' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
+            <Calendar className="w-5 h-5" />
+            <span className="text-xs">Pre-Auth</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex flex-col items-center justify-center py-2 ${activeTab === 'history' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
+            <History className="w-5 h-5" />
+            <span className="text-xs">History</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
