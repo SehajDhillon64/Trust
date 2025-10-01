@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, DollarSign, History, Plus, FileText, X, Settings, Calendar } from 'lucide-react';
 import { useData } from '../contexts/DataContextSupabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,6 +29,15 @@ export default function POADashboard() {
 
   
 
+  // Local state for controlled mail note when preference is 'other'
+  const [mailNote, setMailNote] = useState('');
+  useEffect(() => {
+    if (linkedResident?.mailDeliveryPreference === 'other') {
+      setMailNote(linkedResident.mailDeliveryNote || '');
+    } else {
+      setMailNote('');
+    }
+  }, [linkedResident?.id, linkedResident?.mailDeliveryPreference, linkedResident?.mailDeliveryNote]);
   const handleServiceAuthorizationChange = (service: keyof typeof linkedResident.allowedServices, authorized: boolean) => {
     if (!linkedResident) return;
     
@@ -259,7 +268,7 @@ export default function POADashboard() {
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      defaultValue={linkedResident.mailDeliveryNote || ''}
+                      value={mailNote}
                       placeholder="e.g., Deliver to nurse station, specific instructions"
                       onBlur={async (e) => {
                         try {
@@ -270,13 +279,16 @@ export default function POADashboard() {
                           }
                         } catch {}
                       }}
+                      onChange={(e) => setMailNote(e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <button
                       onClick={async () => {
                         try {
                           if (updateResidentMailPreference) {
-                            await updateResidentMailPreference(linkedResident.id, 'other', linkedResident.mailDeliveryNote || '');
+                            await updateResidentMailPreference(linkedResident.id, 'other', mailNote);
+                          } else {
+                            await updateResident(linkedResident.id, { mailDeliveryPreference: 'other', mailDeliveryNote: mailNote } as any);
                           }
                         } catch {}
                       }}
