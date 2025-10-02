@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, DollarSign, History, Plus, FileText, X, Settings, Calendar } from 'lucide-react';
+import { User, DollarSign, History, Plus, FileText, X, Settings, Calendar, MoreHorizontal, LogOut } from 'lucide-react';
 import { useData } from '../contexts/DataContextSupabase';
 import { useAuth } from '../contexts/AuthContext';
 import TransactionHistory from './TransactionHistory';
@@ -14,7 +14,7 @@ export default function POADashboard() {
   const [showMonthlyReport, setShowMonthlyReport] = useState(false);
   const [showPreAuthForm, setShowPreAuthForm] = useState(false);
   const [showOnlinePayment, setShowOnlinePayment] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'mail' | 'preauth' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'mail' | 'preauth' | 'history' | 'more'>('overview');
   const { residents, transactions, getResidentTransactions, updateResident, facilities, getResidentPreAuthDebits, isLoading, updateResidentMailPreference } = useData();
   const { user, logout } = useAuth();
 
@@ -95,25 +95,35 @@ export default function POADashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 relative">
+        {/* Mobile sign out icon top-right */}
+        <button
+          onClick={logout}
+          className="absolute top-3 right-3 sm:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+          aria-label="Sign out"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               {user?.role === 'Resident' ? 'My Account' : 'POA Dashboard'}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
               {user?.role === 'Resident' 
                 ? `Welcome, ${user.name}` 
                 : `Managing account for ${linkedResident.name}`
               }
             </p>
             {residentFacility && (
-              <p className="text-blue-600 font-semibold mt-1 text-lg">
+              <p className="text-blue-600 font-semibold mt-1 text-base sm:text-lg">
                 📍 {residentFacility.name}
               </p>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          {/* Desktop header actions */}
+          <div className="hidden sm:flex flex-wrap items-center gap-2 sm:gap-4">
             <button
               onClick={() => setShowMonthlyReport(true)}
               className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
@@ -144,15 +154,15 @@ export default function POADashboard() {
           {/* Facility Info Banner - only on Overview tab for small screens */}
           {residentFacility && (
             <div className={`bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-sm text-white p-6 ${activeTab === 'overview' ? 'block' : 'hidden'} sm:block`}>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold mb-1">Community: {residentFacility.name}</h2>
-                  <p className="text-purple-100 text-sm">{residentFacility.address}</p>
-                  <p className="text-purple-100 text-sm">{residentFacility.phone}</p>
+                <h2 className="text-lg sm:text-xl font-bold mb-1">Community: {residentFacility.name}</h2>
+                <p className="text-purple-100 text-xs sm:text-sm">{residentFacility.address}</p>
+                <p className="text-purple-100 text-xs sm:text-sm">{residentFacility.phone}</p>
                 </div>
                 <div className="sm:text-right text-left">
-                  <p className="text-purple-100 text-sm">Resident ID</p>
-                  <p className="text-white font-semibold">{linkedResident.residentId}</p>
+                <p className="text-purple-100 text-xs sm:text-sm">Resident ID</p>
+                <p className="text-white font-semibold text-sm sm:text-base">{linkedResident.residentId}</p>
                 </div>
               </div>
             </div>
@@ -490,6 +500,38 @@ export default function POADashboard() {
             )}
           </div>
 
+          {/* More - consolidates settings/report actions for mobile */}
+          <div className={`${activeTab === 'more' ? 'block' : 'hidden'} sm:hidden`}>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200 flex items-center space-x-3">
+                <MoreHorizontal className="w-5 h-5 text-gray-600" />
+                <h2 className="text-lg font-semibold text-gray-900">More</h2>
+              </div>
+              <div className="p-4 grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => setShowMonthlyReport(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                >
+                  <span className="flex items-center space-x-2 text-gray-900">
+                    <Calendar className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium">Monthly Reports</span>
+                  </span>
+                  <span className="text-xs text-gray-500">Open</span>
+                </button>
+                <button
+                  onClick={() => setShowServiceSettings(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50"
+                >
+                  <span className="flex items-center space-x-2 text-gray-900">
+                    <Settings className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium">Service Settings</span>
+                  </span>
+                  <span className="text-xs text-gray-500">Open</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Account Actions */}
          
         </div>
@@ -648,7 +690,7 @@ export default function POADashboard() {
 
       {/* Bottom Tab Bar - mobile only */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           <button
             onClick={() => setActiveTab('overview')}
             className={`flex flex-col items-center justify-center py-2 ${activeTab === 'overview' ? 'text-blue-600' : 'text-gray-500'}`}
@@ -676,6 +718,13 @@ export default function POADashboard() {
           >
             <History className="w-5 h-5" />
             <span className="text-xs">History</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('more')}
+            className={`flex flex-col items-center justify-center py-2 ${activeTab === 'more' ? 'text-blue-600' : 'text-gray-500'}`}
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            <span className="text-xs">More</span>
           </button>
         </div>
       </nav>
