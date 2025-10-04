@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { fetchPayPalConfig } from '../services/paypal';
-import { supabase } from '../config/supabase';
+import { rpcCall } from '../services/rpc';
 
 export default function OnlinePaymentModal({
   residentId,
@@ -133,33 +133,16 @@ export default function OnlinePaymentModal({
                     const feeNum = breakdown?.paypal_fee?.value ? Number(breakdown.paypal_fee.value) : (cardChargedNum - trustTopUpNum);
                     const netNum = breakdown?.net_amount?.value ? Number(breakdown.net_amount.value) : (grossNum - feeNum);
 
-                    // Resolve created_by from current user profile
-                    const { data: session } = await supabase.auth.getSession();
-                    const authId = session.session?.user?.id;
-                    if (!authId) throw new Error('Not signed in');
-
-                    const { data: userRow, error: userErr } = await supabase
-                      .from('users')
-                      .select('id')
-                      .eq('auth_user_id', authId)
-                      .maybeSingle();
-                    if (userErr || !userRow?.id) {
-                      throw new Error('User profile not found');
-                    }
-
-                    // Persist transaction (credit trust with the requested top-up value) and include actual PayPal breakdown
-                    const { error: insertErr } = await supabase
-                      .from('transactions')
-                      .insert({
-                        resident_id: residentId,
-                        facility_id: facilityId,
-                        type: 'credit',
-                        amount: trustTopUpNum,
-                        method: 'manual',
-                        description: `Online Payment (PayPal ${currency}) - Gross ${grossNum.toFixed(2)} ${currency}, PayPal fee ${feeNum.toFixed(2)} ${currency}, Net received ${netNum.toFixed(2)} ${currency} | Top-up credited ${trustTopUpNum.toFixed(2)} ${currency}`,
-                        created_by: userRow.id,
-                      });
-                    if (insertErr) throw insertErr;
+                    // Persist server-side using existing RPC to create transactions
+                    await rpcCall('createTransaction', [{
+                      residentId,
+                      facilityId,
+                      type: 'credit',
+                      amount: trustTopUpNum,
+                      method: 'manual',
+                      description: `Online Payment (PayPal ${currency}) - Gross ${grossNum.toFixed(2)} ${currency}, PayPal fee ${feeNum.toFixed(2)} ${currency}, Net received ${netNum.toFixed(2)} ${currency} | Top-up credited ${trustTopUpNum.toFixed(2)} ${currency}`,
+                      createdBy: ''
+                    }]);
 
                     onSuccess();
                   } catch (e: any) {

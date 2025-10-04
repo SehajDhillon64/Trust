@@ -1,6 +1,6 @@
 import { rpcCall } from './rpc';
 import type { MonthlyCashBoxHistory } from '../types';
-import { supabase } from '../config/supabase';
+// Frontend should not use Supabase directly
 
 // Cash Box Types
 export interface CashBoxTransaction {
@@ -32,16 +32,7 @@ export async function initializeCashBoxBalance(
   facilityId: string,
   userId: string
 ): Promise<{ success: boolean; balance?: number; initialized?: boolean; error?: string }> {
-  try {
-    const { data, error } = await supabase.rpc('initialize_cash_box_balance', {
-      p_facility_id: facilityId,
-      p_user_id: userId
-    });
-    if (error) throw error;
-    return data as any;
-  } catch (e: any) {
-    return { success: false, error: e?.message || 'Unknown error' };
-  }
+  return rpcCall('initializeCashBoxBalance', [facilityId, userId])
 }
 
 // Get current cash box balance for a facility (server-backed)
@@ -81,18 +72,7 @@ export async function getCashBoxTransactions(
   limit: number = 50,
   offset: number = 0
 ): Promise<CashBoxTransaction[]> {
-  try {
-    const { data, error } = await supabase
-      .from('cash_box_transactions')
-      .select('*')
-      .eq('facility_id', facilityId)
-      .order('created_at', { ascending: false })
-      .range(offset, Math.max(offset, offset + limit - 1));
-    if (error) throw error;
-    return (data as unknown as CashBoxTransaction[]) || [];
-  } catch (e) {
-    return [];
-  }
+  return rpcCall('getCashBoxTransactionsByMonthYear', [facilityId, undefined, undefined])
 }
 
 // Get cash box transactions by date range
@@ -101,19 +81,7 @@ export async function getCashBoxTransactionsByDate(
   startDateIso: string,
   endDateIso: string
 ): Promise<CashBoxTransaction[]> {
-  try {
-    const { data, error } = await supabase
-      .from('cash_box_transactions')
-      .select('*')
-      .eq('facility_id', facilityId)
-      .gte('created_at', startDateIso)
-      .lte('created_at', endDateIso)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data as unknown as CashBoxTransaction[]) || [];
-  } catch (e) {
-    return [];
-  }
+  return rpcCall('getCashBoxTransactionsByMonthYear', [facilityId, undefined, undefined])
 }
 
 // Subscribe to cash box balance changes
@@ -121,20 +89,14 @@ export function subscribeToCashBoxBalance(
   facilityId: string,
   onUpdate: (balance: number) => void
 ) {
-  const channel = supabase
-    .channel(`cash_box_balance_${facilityId}`)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'cash_box_balances', filter: `facility_id=eq.${facilityId}` },
-      (payload: any) => {
-        const next = (payload?.new as any) || null;
-        if (next && typeof next.balance !== 'undefined') {
-          onUpdate(Number(next.balance));
-        }
-      }
-    )
-    .subscribe();
-  return { unsubscribe() { try { supabase.removeChannel(channel) } catch (_) {} } }
+  let stop = false
+  ;(async function poll(){
+    while(!stop){
+      try{ const b = await getCashBoxBalance(facilityId); onUpdate(b) }catch{}
+      await new Promise(r=>setTimeout(r,5000))
+    }
+  })()
+  return { unsubscribe(){ stop = true } }
 }
 
 // Add realtime subscription for cash box transactions

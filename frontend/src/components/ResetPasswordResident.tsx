@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../config/supabase';
+import { rpcCall } from '../services/rpc';
 
 export default function ResetPasswordResident() {
   const [password, setPassword] = useState('');
@@ -27,70 +27,37 @@ export default function ResetPasswordResident() {
         const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
         const code = hashParams.get('code') || queryParams.get('code');
 
-        if (accessToken && refreshToken) {
-          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-          window.history.replaceState({}, '', pathname);
-          return;
-        }
-        if (code) {
-          try {
-            await supabase.auth.exchangeCodeForSession(code);
-          } catch (_) {}
+        // Just pass tokens to backend to exchange cookies; do not use supabase client
+        if (accessToken) {
+          await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/exchange`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+            credentials: 'include',
+            body: JSON.stringify({ accessToken, refreshToken })
+          }).catch(() => {});
           window.history.replaceState({}, '', pathname);
         }
       } catch (_) {}
     };
 
-    const exchangeSessionForCookies = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const accessToken = data.session?.access_token || null;
-        const refreshToken = data.session?.refresh_token || null;
-        if (accessToken) {
-          await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/exchange`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
-            credentials: 'include',
-            body: JSON.stringify({ accessToken, refreshToken }),
-          }).catch(() => {});
-        }
-      } catch (_) {}
-    };
+    const exchangeSessionForCookies = async () => {};
     const loadLinkedResident = async () => {
       setLookupLoading(true);
       setError('');
       try {
-        const { data: session } = await supabase.auth.getSession();
-        const authUserId = session.session?.user?.id;
-        if (!authUserId) {
+        // Load linked resident using backend and cookies
+        const respProfile = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/me`, { credentials: 'include' });
+        if (!respProfile.ok) {
           setError('No active recovery session. Please use the reset link from your email.');
           return;
         }
-        const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('auth_user_id', authUserId)
-          .single();
-        if (profileError || !profile) {
-          setError('Unable to load your account. Please contact support.');
-          return;
-        }
-        const { data: residentRow, error: residentError } = await supabase
-          .from('residents')
-          .select('*')
-          .eq('linked_user_id', profile.id)
-          .maybeSingle();
-        if (residentError) {
+        const respResident = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/me`, { credentials: 'include' });
+        if (!respResident.ok) {
           setError('Failed to load resident. Please try again later.');
           return;
         }
-        if (!residentRow) {
-          setError('No resident is linked to this account.');
-          return;
-        }
+        const residentRow = await respResident.json();
+        if (!residentRow) { setError('No resident is linked to this account.'); return; }
         if (isMounted) setResident(residentRow);
       } catch (e: any) {
         setError(e?.message || 'Unexpected error loading account.');
@@ -148,8 +115,16 @@ export default function ResetPasswordResident() {
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password })
+      });
+      if (!resp.ok) {
+        const b = await resp.json().catch(() => ({}));
+        throw new Error(b?.error || 'Failed to update password');
+      }
       setMessage('Password updated. You can now sign in.');
     } catch (e: any) {
       setError(e?.message || 'Failed to update password');

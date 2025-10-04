@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, Facility } from '../types';
-import { supabase } from '../config/supabase';
+import { signInUser, signOutUser } from '../services/database';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
@@ -89,39 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // 1) Sign in on the client to obtain tokens immediately
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error || !data?.session) {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
-        return false;
-      }
-
-      // 2) Persist tokens into secure HTTP-only cookies for backend usage
-      const API_BASE = ((((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com') as string).replace(/\/+$/, '');
-      try {
-        await fetch(`${API_BASE}/api/auth/exchange`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            accessToken: data.session.access_token,
-            refreshToken: data.session.refresh_token
-          })
-        });
-      } catch {}
-
-      // 3) Load profile and facility from backend (service role, RLS-safe)
-      const profileResp = await fetch(`${API_BASE}/api/users/me`, { credentials: 'include' });
-      if (!profileResp.ok) {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
-        return false;
-      }
-      const body = await profileResp.json();
+      const body = await signInUser(email, password);
 
       // Map backend row to frontend types
       const mappedUser: User = {
         id: body.user?.id,
-        name: body.user?.name || (email.split('@')[0] || 'User'),
+        name: body.user?.name || (body.user?.email?.split('@')[0] || 'User'),
         email: body.user?.email || email,
         role: body.user?.role,
         facilityId: body.user?.facility_id || undefined,
@@ -161,11 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       // Sign out locally and clear backend cookies
-      try { await supabase.auth.signOut(); } catch {}
-      const API_BASE = ((((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com') as string).replace(/\/+$/, '');
-      try {
-        await fetch(`${API_BASE}/api/auth/signout`, { method: 'POST', credentials: 'include' });
-      } catch {}
+      await signOutUser();
       setAuthState({
         user: null,
         isAuthenticated: false,

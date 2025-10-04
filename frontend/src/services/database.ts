@@ -1,8 +1,7 @@
 import { rpcCall } from './rpc'
 import type { User, Facility, Resident, Transaction, ServiceBatch, PreAuthDebit, MonthlyPreAuthList, SignupInvitation, Invoice, InvoiceItem } from '../types'
 
-// Deprecated: Login handled client-side via Supabase auth for performance
-export async function signInUser(email: string, password: string) { throw new Error('signInUser RPC deprecated'); }
+export async function signInUser(email: string, password: string) { return rpcCall('signInUser', [email, password]) }
 export async function signOutUser() { return rpcCall('signOutUser') }
 export async function getCurrentUser() { return rpcCall('getCurrentUser') }
 

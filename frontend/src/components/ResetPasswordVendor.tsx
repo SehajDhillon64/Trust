@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../config/supabase';
+import { rpcCall } from '../services/rpc';
 
 export default function ResetPasswordVendor() {
   const [password, setPassword] = useState('');
@@ -26,8 +26,17 @@ export default function ResetPasswordVendor() {
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const API_BASE = (import.meta as any)?.env?.VITE_BACKEND_URL || 'https://trust-3.onrender.com';
+      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password })
+      });
+      if (!resp.ok) {
+        const b = await resp.json().catch(() => ({}));
+        throw new Error(b?.error || 'Failed to update password');
+      }
       setMessage('Password updated. You can now sign in.');
     } catch (e: any) {
       setError(e?.message || 'Failed to update password');
