@@ -22,7 +22,7 @@ export default function AuthPage() {
     setSuccess('');
 
     try {
-      const ok = await login(formData.email, formData.password);
+      const ok = await login(formData.email.trim(), formData.password);
       if (!ok) {
         setError('Invalid credentials. Please try again.');
       }

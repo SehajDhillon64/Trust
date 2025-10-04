@@ -36,14 +36,15 @@ export default function VendorDashboard() {
   }, [facilities, selectedFacilityId]);
 
   useEffect(() => {
-    // Check auth metadata for mustResetPassword flag
+    // Check auth metadata via backend profile
     const checkMeta = async () => {
       try {
-        const { supabase } = await import('../config/supabase');
-        const { data } = await supabase.auth.getUser();
-        const meta: any = data.user?.user_metadata || {};
-        if (meta.mustResetPassword === true) {
-          setMustReset(true);
+        const API_BASE = (import.meta as any)?.env?.VITE_BACKEND_URL || 'https://trust-3.onrender.com';
+        const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/me`, { credentials: 'include' });
+        if (resp.ok) {
+          const body = await resp.json();
+          const meta = body?.user?.auth_metadata || body?.user?.app_metadata || {};
+          if ((meta as any).mustResetPassword === true) setMustReset(true);
         }
       } catch {}
     };
@@ -175,9 +176,17 @@ export default function VendorDashboard() {
                   if (!newPw || newPw.length < 6) { setPwErr('Password must be at least 6 characters'); return; }
                   if (newPw !== confirmPw) { setPwErr('Passwords do not match'); return; }
                   try {
-                    const { supabase } = await import('../config/supabase');
-                    const { error } = await supabase.auth.updateUser({ password: newPw, data: { mustResetPassword: false } as any });
-                    if (error) throw error;
+                    const API_BASE = (import.meta as any)?.env?.VITE_BACKEND_URL || 'https://trust-3.onrender.com';
+                    const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({ password: newPw })
+                    });
+                    if (!resp.ok) {
+                      const b = await resp.json().catch(() => ({}));
+                      throw new Error(b?.error || 'Failed to update password');
+                    }
                     setMustReset(false);
                   } catch (e: any) {
                     setPwErr(e?.message || 'Failed to update password');

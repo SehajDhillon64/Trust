@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, Facility } from '../types';
-import { signInUser, signOutUser, getCurrentUser } from '../services/database';
-import { supabase } from '../config/supabase';
+import { signInUser, signOutUser } from '../services/database';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
@@ -90,12 +89,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      const userData = await signInUser(email, password);
+      const body = await signInUser(email, password);
+
+      // Map backend row to frontend types
+      const mappedUser: User = {
+        id: body.user?.id,
+        name: body.user?.name || (body.user?.email?.split('@')[0] || 'User'),
+        email: body.user?.email || email,
+        role: body.user?.role,
+        facilityId: body.user?.facility_id || undefined,
+        companyId: body.companyId || body.user?.company_id || undefined,
+      };
+
+      let mappedFacility: Facility | null = null;
+      if (body.facility) {
+        const f = body.facility;
+        mappedFacility = {
+          id: f.id,
+          name: f.name,
+          address: f.address || '',
+          phone: f.phone || '',
+          email: f.email || '',
+          officeManagerEmail: f.office_manager_email || '',
+          createdAt: f.created_at || new Date().toISOString(),
+          status: (f.status as any) || 'active',
+          uniqueCode: f.unique_code || '',
+          companyId: f.company_id || mappedUser.companyId || ''
+        };
+      }
+
       setAuthState({
-        user: userData.user,
+        user: mappedUser,
         isAuthenticated: true,
         isLoading: false,
-        currentFacility: userData.facility
+        currentFacility: mappedFacility
       });
       return true;
     } catch (error) {
@@ -106,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      // Sign out locally and clear backend cookies
       await signOutUser();
       setAuthState({
         user: null,

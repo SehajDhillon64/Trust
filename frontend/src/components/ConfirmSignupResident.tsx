@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../config/supabase';
+import { rpcCall } from '../services/rpc';
 
 export default function ConfirmSignupResident() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -32,14 +32,7 @@ export default function ConfirmSignupResident() {
   useEffect(() => {
     let isMounted = true;
 
-    const getAccessToken = async (): Promise<string | null> => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        return data.session?.access_token || null;
-      } catch {
-        return null;
-      }
-    };
+    const getAccessToken = async (): Promise<string | null> => null;
 
     const materializeProfile = async () => {
       try {
@@ -65,16 +58,13 @@ export default function ConfirmSignupResident() {
         const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
         const code = hashParams.get('code') || queryParams.get('code');
 
-        if (accessToken && refreshToken) {
-          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-          window.history.replaceState({}, '', pathname);
-          return;
-        }
-
-        if (code) {
-          try {
-            await supabase.auth.exchangeCodeForSession(code);
-          } catch (_) {}
+        if (accessToken) {
+          await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/exchange`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+            credentials: 'include',
+            body: JSON.stringify({ accessToken, refreshToken })
+          }).catch(() => {});
           window.history.replaceState({}, '', pathname);
         }
       } catch (_) {}
@@ -85,32 +75,17 @@ export default function ConfirmSignupResident() {
       setError('');
       try {
         // Mirror ResetPasswordResident logic: derive auth_user_id -> users -> residents
-        const { data: session } = await supabase.auth.getSession();
-        const authUserId = session.session?.user?.id;
-        if (!authUserId) {
+        const meResp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/me`, { credentials: 'include' });
+        if (!meResp.ok) {
           setError('No active session. Open this link from your email.');
           return false;
         }
-
-        const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('auth_user_id', authUserId)
-          .single();
-        if (profileError || !profile) {
-          setError('Unable to load your account. Please contact support.');
-          return false;
-        }
-
-        const { data: residentRow, error: residentError } = await supabase
-          .from('residents')
-          .select('*')
-          .eq('linked_user_id', profile.id)
-          .maybeSingle();
-        if (residentError) {
+        const resResident = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/residents/me`, { credentials: 'include' });
+        if (!resResident.ok) {
           setError('Failed to load resident. Please try again later.');
           return false;
         }
+        const residentRow = await resResident.json();
         if (!residentRow) {
           setError('No resident is linked to this account.');
           return false;
@@ -206,13 +181,10 @@ export default function ConfirmSignupResident() {
     setError('');
     setAcceptingTerms(true);
     try {
-      const { data } = await supabase.auth.getSession();
-      const accessToken = data.session?.access_token || null;
       const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/users/accept-terms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -250,8 +222,16 @@ export default function ConfirmSignupResident() {
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const resp = await fetch(`${String(API_BASE).replace(/\/+$/, '')}/api/auth/update-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password })
+      });
+      if (!resp.ok) {
+        const b = await resp.json().catch(() => ({}));
+        throw new Error(b?.error || 'Failed to update password');
+      }
       setMessage('Setup complete. You can now sign in.');
     } catch (e: any) {
       setError(e?.message || 'Failed to update password');

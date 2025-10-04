@@ -361,35 +361,58 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       // For POA/Resident users, we need to find their linked resident first
       if (user.role === 'POA' || user.role === 'Resident') {
-        // Load all residents to find the one linked to this user
-        const allResidentsData = await getAllResidents();
-        const linkedResident = allResidentsData.find(r => r.linkedUserId === user.id);
-        
+        // Faster path: resolve linked resident via backend using cookie/bearer
+        const API_BASE = ((((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com') as string).replace(/\/+$/, '');
+        let linkedResident: Resident | null = null;
+        try {
+          const resp = await fetch(`${API_BASE}/api/residents/me`, { credentials: 'include' });
+          if (resp.ok) {
+            const r = await resp.json();
+            if (r && r.id) {
+              linkedResident = {
+                id: r.id,
+                residentId: r.resident_id || r.residentId,
+                name: r.name,
+                dob: r.dob,
+                trustBalance: Number(r.trust_balance ?? r.trustBalance ?? 0),
+                isSelfManaged: !!(r.is_self_managed ?? r.isSelfManaged),
+                linkedUserId: r.linked_user_id || r.linkedUserId,
+                ltcUnit: r.ltc_unit || r.ltcUnit,
+                status: r.status,
+                createdAt: r.created_at || r.createdAt,
+                facilityId: r.facility_id || r.facilityId,
+                bankDetails: r.bank_details || r.bankDetails,
+                allowedServices: r.allowed_services || r.allowedServices || { haircare:false, footcare:false, pharmacy:false, cable:false, wheelchairRepair:false, miscellaneous:false },
+                serviceAuthorizations: r.service_authorizations || r.serviceAuthorizations,
+                mailDeliveryPreference: r.mail_delivery_preference || r.mailDeliveryPreference || undefined,
+                mailDeliveryNote: r.mail_delivery_note || r.mailDeliveryNote || undefined,
+              } as any;
+            }
+          }
+        } catch {}
+
         if (linkedResident && linkedResident.facilityId) {
-          // Load the facility for this resident
           const facilityData = await getFacilityById(linkedResident.facilityId);
           setFacilities([facilityData]);
-          
-          // Load all residents and transactions for this facility
+
           const [residentsData, transactionsData, preAuthDebitsData, cashBoxBalance] = await Promise.all([
             getResidentsByFacility(linkedResident.facilityId),
-            getTransactionsByFacility(linkedResident.facilityId, 100),
+            getTransactionsByFacility(linkedResident.facilityId, 50),
             getPreAuthDebitsByFacility(linkedResident.facilityId),
             getCashBoxBalanceDb(linkedResident.facilityId)
           ]);
-          
+
           setResidents(residentsData);
           setTransactions(transactionsData);
           setPreAuthDebits(preAuthDebitsData);
-          
-          // Update cash box balance
+
           setCashBoxBalances(prev => ({
             ...prev,
             [linkedResident.facilityId]: cashBoxBalance
           }));
         } else {
-          // If no linked resident found, just set the residents list so POA can see the error message
-          setResidents(allResidentsData);
+          // Minimal fallback: avoid loading every resident for performance
+          setResidents([]);
         }
       } else {
         // Original logic for Admin and OM users
@@ -415,7 +438,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (currentFacility) {
           const [residentsData, transactionsData, serviceBatchesData, preAuthDebitsData, monthlyPreAuthListsData, cashBoxBalance, depositBatchesData, facilityInvoices] = await Promise.all([
             getResidentsByFacility(currentFacility.id),
-            getTransactionsByFacility(currentFacility.id, 100), // Last 100 transactions
+            getTransactionsByFacility(currentFacility.id, 50),
             getServiceBatchesByFacility(currentFacility.id),
             getPreAuthDebitsByFacility(currentFacility.id),
             getFacilityMonthlyPreAuthLists(currentFacility.id),
@@ -1049,26 +1072,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const processAllPreAuthDebits = async (debitIds: string[]): Promise<{ successCount: number; failedCount: number; errors: Array<{ debitId: string; error: string }> }> => {
-    const results: Array<{ debitId: string; error?: string }> = [];
+    const errors: Array<{ debitId: string; error: string }> = [];
     let successCount = 0;
     let failedCount = 0;
 
-    for (const debitId of debitIds) {
-      try {
-        const result = await processPreAuthDebit(debitId);
-        if (result.success) {
-          successCount++;
-        } else {
-          failedCount++;
-          results.push({ debitId, error: result.error || 'Unknown error' });
-        }
-      } catch (error) {
-        failedCount++;
-        results.push({ debitId, error: error instanceof Error ? error.message : 'Unknown error' });
-      }
-    }
+    // Run with bounded concurrency to avoid UI lag and server overload
+    const concurrency = Math.min(4, Math.max(1, navigator?.hardwareConcurrency ? Math.floor(navigator.hardwareConcurrency / 2) : 4));
+    let index = 0;
 
-    return { successCount, failedCount, errors: results };
+    const worker = async () => {
+      while (true) {
+        const currentIndex = index++;
+        if (currentIndex >= debitIds.length) break;
+        const debitId = debitIds[currentIndex];
+        try {
+          const result = await processPreAuthDebit(debitId);
+          if (result.success) {
+            successCount++;
+          } else {
+            failedCount++;
+            errors.push({ debitId, error: result.error || 'Unknown error' });
+          }
+        } catch (err: any) {
+          failedCount++;
+          errors.push({ debitId, error: err?.message || 'Unknown error' });
+        }
+      }
+    };
+
+    await Promise.all(new Array(concurrency).fill(0).map(() => worker()));
+
+    return { successCount, failedCount, errors };
   };
 
   // Deposit batch functions (existing/local)
