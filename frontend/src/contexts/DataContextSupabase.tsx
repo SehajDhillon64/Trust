@@ -402,7 +402,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
             getCashBoxBalanceDb(linkedResident.facilityId)
           ]);
 
-          setResidents(residentsData);
+          // Ensure the linked resident is present even if facility-wide reads are restricted by RLS
+          const mergedResidents = linkedResident
+            ? (residentsData.some(r => r.id === linkedResident.id)
+                ? residentsData
+                : [linkedResident, ...residentsData])
+            : residentsData;
+
+          setResidents(mergedResidents);
           setTransactions(transactionsData);
           setPreAuthDebits(preAuthDebitsData);
 
@@ -411,8 +418,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
             [linkedResident.facilityId]: cashBoxBalance
           }));
         } else {
-          // Minimal fallback: avoid loading every resident for performance
-          setResidents([]);
+          // Minimal fallback: include the linked resident if available
+          setResidents(linkedResident ? [linkedResident] : []);
         }
       } else {
         // Original logic for Admin and OM users
