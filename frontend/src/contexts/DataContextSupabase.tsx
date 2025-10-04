@@ -361,7 +361,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       // For POA/Resident users, we need to find their linked resident first
       if (user.role === 'POA' || user.role === 'Resident') {
-        // Faster path: resolve linked resident via backend using cookie/bearer
+        // Try server endpoint first (uses cookie or bearer if available)
         const API_BASE = ((((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com') as string).replace(/\/+$/, '');
         let linkedResident: Resident | null = null;
         try {
@@ -391,6 +391,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
           }
         } catch {}
 
+        // Fallback: infer linked resident from facility's roster when cookie/bearer not present
+        if (!linkedResident) {
+          const facilityIdToUse = currentFacility?.id || user.facilityId || null;
+          if (facilityIdToUse) {
+            try {
+              const [facilityData, residentsData] = await Promise.all([
+                getFacilityById(facilityIdToUse),
+                getResidentsByFacility(facilityIdToUse)
+              ]);
+              const inferred = residentsData.find(r => r.linkedUserId === user.id) || null;
+              if (inferred) {
+                linkedResident = inferred;
+                setFacilities([facilityData]);
+                // Proceed to load additional datasets below using inferred resident/facility
+                const [transactionsData, preAuthDebitsData, cashBoxBalance] = await Promise.all([
+                  getTransactionsByFacility(facilityIdToUse, 50),
+                  getPreAuthDebitsByFacility(facilityIdToUse),
+                  getCashBoxBalanceDb(facilityIdToUse)
+                ]);
+                setResidents(residentsData);
+                setTransactions(transactionsData);
+                setPreAuthDebits(preAuthDebitsData);
+                setCashBoxBalances(prev => ({
+                  ...prev,
+                  [facilityIdToUse]: cashBoxBalance
+                }));
+                // Done with POA/Resident path
+                setIsLoading(false);
+                return;
+              }
+            } catch (_) {
+              // Ignore and continue to original flow below
+            }
+          }
+        }
+
         if (linkedResident && linkedResident.facilityId) {
           const facilityData = await getFacilityById(linkedResident.facilityId);
           setFacilities([facilityData]);
@@ -418,7 +454,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             [linkedResident.facilityId]: cashBoxBalance
           }));
         } else {
-          // Minimal fallback: include the linked resident if available
+          // Minimal fallback: include the linked resident if available (may still be empty)
           setResidents(linkedResident ? [linkedResident] : []);
         }
       } else {
