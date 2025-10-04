@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, Facility } from '../types';
-import { signInUser, signOutUser, getCurrentUser } from '../services/database';
 import { supabase } from '../config/supabase';
 
 interface AuthContextType extends AuthState {
@@ -90,12 +89,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      const userData = await signInUser(email, password);
+      // 1) Sign in on the client to obtain tokens immediately
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data?.session) {
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
+
+      // 2) Persist tokens into secure HTTP-only cookies for backend usage
+      const API_BASE = ((((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com') as string).replace(/\/+$/, '');
+      try {
+        await fetch(`${API_BASE}/api/auth/exchange`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accessToken: data.session.access_token,
+            refreshToken: data.session.refresh_token
+          })
+        });
+      } catch {}
+
+      // 3) Load profile and facility from backend (service role, RLS-safe)
+      const profileResp = await fetch(`${API_BASE}/api/users/me`, { credentials: 'include' });
+      if (!profileResp.ok) {
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      const body = await profileResp.json();
+
+      // Map backend row to frontend types
+      const mappedUser: User = {
+        id: body.user?.id,
+        name: body.user?.name || (email.split('@')[0] || 'User'),
+        email: body.user?.email || email,
+        role: body.user?.role,
+        facilityId: body.user?.facility_id || undefined,
+        companyId: body.companyId || body.user?.company_id || undefined,
+      };
+
+      let mappedFacility: Facility | null = null;
+      if (body.facility) {
+        const f = body.facility;
+        mappedFacility = {
+          id: f.id,
+          name: f.name,
+          address: f.address || '',
+          phone: f.phone || '',
+          email: f.email || '',
+          officeManagerEmail: f.office_manager_email || '',
+          createdAt: f.created_at || new Date().toISOString(),
+          status: (f.status as any) || 'active',
+          uniqueCode: f.unique_code || '',
+          companyId: f.company_id || mappedUser.companyId || ''
+        };
+      }
+
       setAuthState({
-        user: userData.user,
+        user: mappedUser,
         isAuthenticated: true,
         isLoading: false,
-        currentFacility: userData.facility
+        currentFacility: mappedFacility
       });
       return true;
     } catch (error) {
@@ -106,7 +160,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await signOutUser();
+      // Sign out locally and clear backend cookies
+      try { await supabase.auth.signOut(); } catch {}
+      const API_BASE = ((((import.meta as any)?.env?.VITE_BACKEND_URL) || 'https://trust-3.onrender.com') as string).replace(/\/+$/, '');
+      try {
+        await fetch(`${API_BASE}/api/auth/signout`, { method: 'POST', credentials: 'include' });
+      } catch {}
       setAuthState({
         user: null,
         isAuthenticated: false,
