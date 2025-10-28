@@ -21,7 +21,7 @@ import {
 import { getCashBoxTransactionsByDate } from '../services/cashbox-database';
 import OmChatbot from './OmChatbot';
 import ChatbotWidget from './ChatbotWidget';
-import { supabase } from '../config/supabase';
+// Removed direct Supabase usage; use backend endpoints instead
 
 export default function OMDashboard() {
   const [activeView, setActiveView] = useState<'overview' | 'residents' | 'batches' | 'cashbox' | 'preauth' | 'depositbatch' | 'invoices' | 'onlinepayments'>('overview');
@@ -110,17 +110,14 @@ export default function OMDashboard() {
         const cashWithdrawals = cashTx.filter(t => t.transaction_type === 'withdrawal');
         setMonthlyCashWithdrawalTotal(cashTx.reduce((s, t) => s + Number(t.amount || 0), 0));
 
-        // Accounts Closed by Cheque: from resident_withdrawals in month with method = 'cheque'
-        const { data: rw, error } = await supabase
-          .from('resident_withdrawals')
-          .select('id,resident_id,amount,created_at')
-          .eq('facility_id', currentFacility.id)
-          .eq('method', 'cheque')
-          .gte('created_at', startIso)
-          .lte('created_at', endIso)
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        setAccountsClosedByCheque(rw || []);
+        // Accounts Closed by Cheque via server
+        const resp = await fetch(`/api/reports/resident-withdrawals?facilityId=${encodeURIComponent(currentFacility.id)}&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`);
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => ({}));
+          throw new Error(body?.error || `Failed to load resident withdrawals (${resp.status})`);
+        }
+        const rw = await resp.json();
+        setAccountsClosedByCheque(Array.isArray(rw) ? rw : []);
       } catch (e) {
         
         setAccountsClosedByCheque([]);
